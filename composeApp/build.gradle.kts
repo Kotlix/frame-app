@@ -21,6 +21,9 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
+
+            implementation("ru.kotlix:frame-session-handle:1.0.0-SNAPSHOT")
+            implementation("io.netty:netty-all:4.1.114.Final")
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
