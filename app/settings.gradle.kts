@@ -10,5 +10,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "frame-app"
-include("app", "auth", "core")
+rootProject.name = "app"
