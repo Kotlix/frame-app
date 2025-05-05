@@ -16,7 +16,6 @@ import androidx.compose.ui.window.application
 import presentation.viewmodel.AuthViewModel
 
 class RegisterPopup {
-
     @Composable
     fun RegisterPopup(viewModel: AuthViewModel, onClose: () -> Unit) {
         var nickname by remember { mutableStateOf("") }
@@ -25,12 +24,22 @@ class RegisterPopup {
         var password by remember { mutableStateOf("") }
         var errorMessage by remember { mutableStateOf<String?>(null) }
         var isLoading by remember { mutableStateOf(false) }
+        var showCodeVerification by remember { mutableStateOf(false) }
 
-        val registrationError = viewModel.registrationError.collectAsState().value
-        val isRegistered = viewModel.isRegistered.collectAsState().value
+        val registrationError = viewModel.registrationError.value
+        val isRegistered = viewModel.isRegistered.value
 
-        if (isRegistered) {
-            onClose()
+//        if (isRegistered) {
+//            onClose()
+//        }
+
+        if (showCodeVerification) {
+            CodeVerifyPopup().CodeVerifyPopup(viewModel = viewModel, onClose = {
+                if (viewModel.isVerified.value) {
+                    onClose()
+                }
+            })
+            return
         }
 
         Window(
@@ -118,8 +127,8 @@ class RegisterPopup {
                                     } else {
                                         errorMessage = null
                                         isLoading = true
-                                        // Вызов метода регистрации в ViewModel
                                         viewModel.register(nickname, login, email, password)
+                                        showCodeVerification = true
                                     }
                                 },
                                 modifier = Modifier

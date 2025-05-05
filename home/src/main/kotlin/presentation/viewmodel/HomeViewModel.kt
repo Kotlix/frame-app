@@ -1,15 +1,16 @@
 package presentation.viewmodel
 
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import data.usecase.FetchCommunitiesUseCase
 import data.usecase.FetchMyCommunitiesUseCase
 import data.usecase.JoinCommunityUseCase
 import data.usecase.LeaveCommunityUseCase
 import dto.CommunityEntity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import session.SessionManager
 
 class HomeViewModel(
     private val fetchCommunitiesUseCase: FetchCommunitiesUseCase,
@@ -17,6 +18,8 @@ class HomeViewModel(
     private val joinCommunityUseCase: JoinCommunityUseCase,
     private val leaveCommunityUseCase: LeaveCommunityUseCase
 ) {
+
+    private val viewModelScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     var communities = mutableStateOf<List<CommunityEntity>>(emptyList())
         private set
@@ -48,12 +51,12 @@ class HomeViewModel(
 
     fun fetchCommunities(search: String = "", pageOffset: Long = 0, pageCount: Long = 50) {
         fetchCommunitiesUseCase.execute(
-            token = "",  //// INSERT!!!!!!!!!!!!
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
             name = search,
             pageOffset = pageOffset,
             pageCount = pageCount
         ) { data, error ->
-            kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
+            viewModelScope.launch(Dispatchers.Default) {
                 if (data != null) {
                     communities.value = data
                     errorMessage.value = null
@@ -66,9 +69,9 @@ class HomeViewModel(
 
     fun fetchMyCommunities() {
         fetchMyCommunitiesUseCase.execute(
-            token = "",  //// INSERT!!!!!!!!!!!!
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
         ) { data, error ->
-            kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
+            viewModelScope.launch(Dispatchers.Default) {
                 if (data != null) {
                     myCommunities.value = data
                     errorMessage.value = null
@@ -81,10 +84,10 @@ class HomeViewModel(
 
     fun joinCommunity(communityId: Long, callback: () -> Unit) {
         joinCommunityUseCase.execute(
-            token = "",  //// INSERT!!!!!!!!!!!!
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
             communityId = communityId
         ) { error ->
-            kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
+            viewModelScope.launch(Dispatchers.Default) {
                 errorMessage.value = error
                 callback()
             }
@@ -93,15 +96,18 @@ class HomeViewModel(
 
     fun leaveCommunity(communityId: Long, callback: () -> Unit) {
         leaveCommunityUseCase.execute(
-            token = "",  //// INSERT!!!!!!!!!!!!
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
             communityId = communityId
         ) { error ->
-            kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
+            viewModelScope.launch(Dispatchers.Default) {
                 errorMessage.value = error
                 callback()
             }
         }
     }
 
+    fun getToken(): String {
+        return SessionManager.token ?: ""
+    }
 
 }

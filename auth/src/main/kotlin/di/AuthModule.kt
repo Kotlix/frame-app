@@ -4,6 +4,7 @@ import AppConfig
 import data.api.AuthApi
 import data.usecase.LoginUseCase
 import data.usecase.RegisterUseCase
+import data.usecase.VerifyCodeUseCase
 import okhttp3.OkHttpClient
 import org.koin.dsl.module
 import presentation.viewmodel.AuthViewModel
@@ -38,7 +39,12 @@ val authModule = module {
     }
 
     single {
-        AuthViewModel(get(), get())
+        VerifyCodeUseCase(get())
+    }
+
+
+    single {
+        AuthViewModel(get(), get(), get())
     }
 
 }

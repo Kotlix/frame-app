@@ -2,6 +2,8 @@ package presentation.view
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -144,7 +146,9 @@ class HomeView {
                     ) {
                         OutlinedTextField(
                             value = searchQuery,
-                            onValueChange = { searchQuery = it },
+                            onValueChange = { searchQuery = it
+                                viewModel.fetchCommunities(search = it.text)
+                            },
                             label = { Text("Search...") },
                             modifier = Modifier.weight(1f)
                         )
@@ -157,13 +161,13 @@ class HomeView {
                         }
                     }
 
-                    Column(
+                    LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
                             .border(1.dp, Color.Gray)
                             .padding(12.dp)
                     ) {
-                        communities.forEach { community ->
+                        items(communities) { community ->
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -183,12 +187,21 @@ class HomeView {
                                         Text(community.description ?: "", style = MaterialTheme.typography.body2)
                                     }
 
-                                    Button(
-                                        onClick = {
-                                            viewModel.toggleJoin(community.id)
+                                    if (!myCommunities.any {it.id == community.id}) {
+                                        Button(
+                                            onClick = {
+                                                viewModel.toggleJoin(community.id)
+                                            }
+                                        ) {
+                                            Text( "Join")
                                         }
-                                    ) {
-                                        Text(if (myCommunities.any {it.id == community.id}) "Leave" else "Join")
+                                    } else {
+                                        Button(
+                                            onClick = { },
+                                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xE0E0E0E0))
+                                        ) {
+                                            Text( "Joined", color = Color.White)
+                                        }
                                     }
                                 }
                             }
@@ -231,22 +244,184 @@ class HomeView {
             }
         }
     }
-}
 
-fun main() = application {
-    startKoin {
-        modules( homeModule)
+    @Composable
+    fun ChatMockScreen() {
+        Row(modifier = Modifier.fillMaxSize().padding(4.dp)) {
+
+            // Левый боковой бар (Your communities)
+            Column(
+                modifier = Modifier
+                    .width(140.dp)
+                    .fillMaxHeight()
+                    .border(1.dp, Color.Gray)
+                    .padding(4.dp)
+            ) {
+                Text("HSE", color = Color.White, modifier = Modifier.fillMaxWidth().background(Color(0xFF6CA0DC)).padding(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier.fillMaxWidth().background(Color(0xFFB4D3F2)).padding(6.dp)
+                ) {
+                    Text("<name>")
+                }
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            // Средний столбец: элементы и чат
+            Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+
+                // Верхняя панель (elements, chat)
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(Color(0xFFEFEFEF))
+                            .padding(4.dp)
+                    ) {
+                        Text("elements")
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(2f)
+                            .background(Color(0xFFA6E3A1))
+                            .padding(4.dp)
+                    ) {
+                        Text("chat")
+                    }
+                }
+
+                Row(modifier = Modifier.fillMaxSize()) {
+                    // Элементы
+                    Column(
+                        modifier = Modifier
+                            .width(100.dp)
+                            .fillMaxHeight()
+                            .border(1.dp, Color.Gray)
+                            .padding(4.dp)
+                    ) {
+                        Text("📁 root", modifier = Modifier.background(Color(0xFFDEEFFF)).padding(4.dp))
+                        Text("💬 chat", modifier = Modifier.background(Color(0xFFA6E3A1)).padding(4.dp))
+                        Text("🎙 voice", modifier = Modifier.background(Color(0xFFB4D3F2)).padding(4.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
+                    }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    // Чат
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .border(1.dp, Color.Gray)
+                            .padding(4.dp)
+                    ) {
+                        // Сообщения
+                        MessageBubble(sender = "onar", message = "Hello world!")
+                        MessageBubble(sender = "you", message = "Hello world!")
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        // Поле ввода и ошибка
+                        Text("type...", modifier = Modifier.fillMaxWidth().padding(4.dp).background(Color.LightGray))
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp).background(Color(0xFFFFC0C0)),
+                            contentAlignment = Alignment.CenterEnd
+                        ) {
+                            Text("Server Error 500", color = Color.Red, modifier = Modifier.padding(4.dp))
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            // Правая панель: пользователи
+            Column(
+                modifier = Modifier
+                    .width(140.dp)
+                    .fillMaxHeight()
+                    .border(1.dp, Color.Gray)
+                    .padding(4.dp)
+            ) {
+                Text("users", modifier = Modifier.padding(bottom = 4.dp))
+                Text("online", modifier = Modifier.padding(vertical = 2.dp))
+                UserTag("onar", highlight = true)
+                UserTag("vova")
+                Text("offline", modifier = Modifier.padding(top = 8.dp, bottom = 2.dp))
+                UserTag("sasha", highlight = true)
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
+                Spacer(modifier = Modifier.height(8.dp))
+                RemovableUser("onar")
+                RemovableUser("admin")
+            }
+        }
     }
-    val a  = KoinPlatform.getKoin().get<HomeViewModel>()
-    a.fetchCommunities()
 
-    Window(onCloseRequest = ::exitApplication, title = "Frame") {
-        MaterialTheme {
-            HomeView().HomeScreen(
-                KoinPlatform.getKoin().get<HomeViewModel>(),
-                onSearchClick = { println("Navigate to Home/Search") },
-                onProfileClick = { println("Navigate to Profile") }
-            )
+    @Composable
+    fun MessageBubble(sender: String, message: String) {
+        Column(modifier = Modifier.padding(vertical = 4.dp)) {
+            Text(sender, modifier = Modifier.background(Color(0xFFFFFF88)).padding(horizontal = 6.dp))
+            Text(message, modifier = Modifier
+                .padding(start = 16.dp)
+                .background(Color.LightGray)
+                .padding(6.dp))
+        }
+    }
+
+    @Composable
+    fun UserTag(name: String, highlight: Boolean = false) {
+        Text(
+            name,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(if (highlight) Color(0xFFFFFF88) else Color.Transparent)
+                .padding(4.dp)
+        )
+    }
+
+    @Composable
+    fun RemovableUser(name: String) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+        ) {
+            Text(name, modifier = Modifier.weight(1f).padding(start = 4.dp))
+            Button(onClick = {}, modifier = Modifier.size(24.dp), contentPadding = PaddingValues(0.dp)) {
+                Text("X", fontSize = 12.sp)
+            }
+        }
+    }
+
+
+    fun launchHome() = application {
+//    startKoin {
+//        modules( homeModule)
+//    }
+        val a  = KoinPlatform.getKoin().get<HomeViewModel>()
+        a.fetchCommunities()
+
+        Window(onCloseRequest = ::exitApplication, title = "Frame") {
+            MaterialTheme {
+                HomeView().HomeScreen(
+                    KoinPlatform.getKoin().get<HomeViewModel>(),
+                    onSearchClick = { println("Navigate to Home/Search") },
+                    onProfileClick = { println("Navigate to Profile") }
+                )
+                //HomeView().ChatMockScreen()
+            }
         }
     }
 }
+
+fun main () {
+    startKoin {
+        modules(homeModule)
+    }
+    HomeView().launchHome()
+ }
+

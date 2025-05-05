@@ -1,5 +1,6 @@
 package di
 
+import AppConfig
 import data.HomeApi
 import data.usecase.FetchCommunitiesUseCase
 import data.usecase.FetchMyCommunitiesUseCase
@@ -20,7 +21,8 @@ val homeModule = module {
     // Retrofit instance
     single {
         Retrofit.Builder()
-            .baseUrl("http://localhost:8080/")
+            //.baseUrl("http://localhost:8080/")
+            .baseUrl(AppConfig.BASE_URL)
             .client(get())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
