@@ -31,12 +31,11 @@ dependencies {
 
 
     implementation(project(":core"))
+    implementation(project(":home"))
 }
 
 compose.desktop {
     application {
-        mainClass = "MainKt"
-
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "auth"

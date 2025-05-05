@@ -26,12 +26,10 @@ class RegisterPopup {
         var errorMessage by remember { mutableStateOf<String?>(null) }
         var isLoading by remember { mutableStateOf(false) }
 
-        // Слушаем состояние ошибок в ViewModel
         val registrationError = viewModel.registrationError.collectAsState().value
         val isRegistered = viewModel.isRegistered.collectAsState().value
 
         if (isRegistered) {
-            // В случае успешной регистрации можно закрыть окно или показать сообщение
             onClose()
         }
 
