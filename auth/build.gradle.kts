@@ -26,6 +26,8 @@ dependencies {
     implementation("io.insert-koin:koin-core:3.5.3")
     implementation("io.insert-koin:koin-compose:1.0.4")
 
+    implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+
     implementation(project(":home"))
     implementation(project(":core"))
 }

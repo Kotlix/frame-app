@@ -60,7 +60,10 @@ class AuthViewModel(
                 if (token != null) {
                     SessionManager.token = "Bearer " + token
                     authState.value = AuthState.LoginComplete
+                    println(token.toString())
+
                 } else {
+                    println(error.toString())
                     authState.value = AuthState.Error(error ?: "Unknown error")
                 }
             }

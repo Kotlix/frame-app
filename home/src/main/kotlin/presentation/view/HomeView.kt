@@ -108,13 +108,13 @@ class HomeView {
                 ) {
 
                     // Community list
-                    Column(
+                    LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
                             .border(1.dp, Color.Gray)
                             .padding(4.dp)
                     ) {
-                        myCommunities.forEachIndexed { index, it ->
+                        items(myCommunities) {
                             val isSelected = it.name == selectedCommunity
                             Row(
                                 modifier = Modifier
@@ -128,7 +128,7 @@ class HomeView {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(it.name)
-                                Text(yourStats.getOrNull(index) ?: "")
+                                //Text(yourStats.getOrNull(index) ?: "")
                             }
                         }
                     }
@@ -246,23 +246,50 @@ class HomeView {
     }
 
     @Composable
-    fun ChatMockScreen() {
+    fun ChatMockScreen(viewModel: HomeViewModel) {
+
+        var selectedCommunity by remember { mutableStateOf("") }
+        var serverError by remember { mutableStateOf<String?>(null) }
+
+        val myCommunities by viewModel.myCommunities
+        val yourStats = emptyList<String>()
+
+        val communities by viewModel.communities
+        val error by viewModel.errorMessage
+
         Row(modifier = Modifier.fillMaxSize().padding(4.dp)) {
 
-            // Левый боковой бар (Your communities)
+            // --- Left panel ---
             Column(
                 modifier = Modifier
-                    .width(140.dp)
+                    .weight(1f)
                     .fillMaxHeight()
-                    .border(1.dp, Color.Gray)
-                    .padding(4.dp)
             ) {
-                Text("HSE", color = Color.White, modifier = Modifier.fillMaxWidth().background(Color(0xFF6CA0DC)).padding(6.dp))
-                Spacer(modifier = Modifier.height(4.dp))
-                Box(
-                    modifier = Modifier.fillMaxWidth().background(Color(0xFFB4D3F2)).padding(6.dp)
+
+                // Community list
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .border(1.dp, Color.Gray)
+                        .padding(4.dp)
                 ) {
-                    Text("<name>")
+                    myCommunities.forEachIndexed { index, it ->
+                        val isSelected = it.name == selectedCommunity
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(if (isSelected) Color.LightGray else Color.Transparent)
+                                .clickable {
+                                    selectedCommunity = it.name
+                                    serverError = null
+                                }
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(it.name)
+                            Text(yourStats.getOrNull(index) ?: "")
+                        }
+                    }
                 }
             }
 
@@ -407,12 +434,12 @@ class HomeView {
 
         Window(onCloseRequest = ::exitApplication, title = "Frame") {
             MaterialTheme {
-                HomeView().HomeScreen(
-                    KoinPlatform.getKoin().get<HomeViewModel>(),
-                    onSearchClick = { println("Navigate to Home/Search") },
-                    onProfileClick = { println("Navigate to Profile") }
-                )
-                //HomeView().ChatMockScreen()
+//                HomeView().HomeScreen(
+//                    KoinPlatform.getKoin().get<HomeViewModel>(),
+//                    onSearchClick = { println("Navigate to Home/Search") },
+//                    onProfileClick = { println("Navigate to Profile") }
+//                )
+                HomeView().ChatMockScreen(KoinPlatform.getKoin().get<HomeViewModel>())
             }
         }
     }

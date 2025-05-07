@@ -11,6 +11,7 @@ import org.koin.dsl.module
 import presentation.viewmodel.HomeViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.scalars.ScalarsConverterFactory
 
 val homeModule = module {
     // OkHttpClient
@@ -21,9 +22,10 @@ val homeModule = module {
     // Retrofit instance
     single {
         Retrofit.Builder()
-            //.baseUrl("http://localhost:8080/")
-            .baseUrl(AppConfig.BASE_URL)
+            .baseUrl("http://localhost:8080")
+            //.baseUrl(AppConfig.BASE_URL)
             .client(get())
+            .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
