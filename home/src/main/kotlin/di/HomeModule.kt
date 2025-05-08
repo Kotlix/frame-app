@@ -1,11 +1,11 @@
 package di
 
 import AppConfig
+import data.ChatApi
+import data.DirectoryApi
 import data.HomeApi
-import data.usecase.FetchCommunitiesUseCase
-import data.usecase.FetchMyCommunitiesUseCase
-import data.usecase.JoinCommunityUseCase
-import data.usecase.LeaveCommunityUseCase
+import data.MessageApi
+import data.usecase.*
 import okhttp3.OkHttpClient
 import org.koin.dsl.module
 import presentation.viewmodel.HomeViewModel
@@ -35,6 +35,18 @@ val homeModule = module {
         get<Retrofit>().create(HomeApi::class.java)
     }
 
+    single<ChatApi> {
+        get<Retrofit>().create(ChatApi::class.java)
+    }
+
+    single<DirectoryApi> {
+        get<Retrofit>().create(DirectoryApi::class.java)
+    }
+
+    single<MessageApi> {
+        get<Retrofit>().create(MessageApi::class.java)
+    }
+
     // UseCase
     single {
         FetchCommunitiesUseCase(get())
@@ -52,8 +64,37 @@ val homeModule = module {
         LeaveCommunityUseCase(get())
     }
 
+    single {
+        CreateChatUseCase(get())
+    }
+
+    single {
+        GetAllMessagesUseCase(get())
+    }
+
+    single {
+        GetAllChatsUseCase(get())
+    }
+
+    single {
+        CreateDirectoryUseCase(get())
+    }
+
+    single {
+        SendMessageUseCase(get())
+    }
+
+    single {
+        DeleteChatUseCase()
+    }
+
+    single {
+        UpdateChatUseCase()
+    }
+
+
     // ViewModel
     single {
-        HomeViewModel(get(), get(), get(), get())
+        HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
     }
 }

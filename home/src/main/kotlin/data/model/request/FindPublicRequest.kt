@@ -1,4 +1,4 @@
-package data.model
+package data.model.request
 
 data class FindPublicRequest(
     val name: String,
