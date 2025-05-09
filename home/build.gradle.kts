@@ -18,6 +18,7 @@ dependencies {
     //implementation(platform("org.jetbrains.compose:compose-bom:2023.03.00"))
     implementation(compose.desktop.currentOs)
 
+    implementation("ru.kotlix:frame-gateway-retrofit-client:1.0.1-SNAPSHOT")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")

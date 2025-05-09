@@ -6,9 +6,7 @@ import data.model.request.CreateDirectoryRequest
 import data.model.request.SendMessageRequest
 import data.model.response.ChatDto
 import data.usecase.*
-import dto.ChatEntity
-import dto.CommunityEntity
-import dto.MessageEntity
+import dto.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,7 +24,9 @@ class HomeViewModel(
     private val getAllChatsUseCase: GetAllChatsUseCase,
     private val sendMessageUseCase: SendMessageUseCase,
     private val getAllMessagesUseCase: GetAllMessagesUseCase,
-    private val updateChatUseCase: UpdateChatUseCase
+    private val updateChatUseCase: UpdateChatUseCase,
+    private val getAllDirectoriesUseCase: GetAllDirectoriesUseCase,
+    private val getAllVoicesUseCase: GetAllVoicesUseCase
 ) {
 
     private val viewModelScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -40,10 +40,22 @@ class HomeViewModel(
     var errorMessage = mutableStateOf<String?>(null)
         private set
 
+    var selectedCommunityId = mutableStateOf<String?>(null)
+        private set
+
+    var selectedChatId = mutableStateOf<String?>(null)
+        private set
+
     var communitiesState = mutableStateOf<List<CommunityEntity>>(emptyList())
         private set
 
+    var directories = mutableStateOf<List<DirectoryEntity>>(emptyList())
+        private set
+
     var chats = mutableStateOf<List<ChatEntity>>(emptyList())
+        private set
+
+    var voices = mutableStateOf<List<VoiceEntity>>(emptyList())
         private set
 
     var messages = mutableStateOf<List<MessageEntity>>(emptyList())
@@ -206,6 +218,42 @@ class HomeViewModel(
             viewModelScope.launch(Dispatchers.Default) {
                 if (data != null) {
                     messages.value = data
+                    errorMessage.value = null
+                } else {
+                    errorMessage.value = error
+                }
+                errorMessage.value = error
+                callback()
+            }
+        }
+    }
+
+    fun getAllDirectories(communityId: Long, callback: () -> Unit) {
+        getAllDirectoriesUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            communityId = communityId
+        ) { data, error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                if (data != null) {
+                    directories.value = data
+                    errorMessage.value = null
+                } else {
+                    errorMessage.value = error
+                }
+                errorMessage.value = error
+                callback()
+            }
+        }
+    }
+
+    fun getAllVoices(communityId: Long, callback: () -> Unit) {
+        getAllVoicesUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            communityId = communityId
+        ) { data, error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                if (data != null) {
+                    voices.value = data
                     errorMessage.value = null
                 } else {
                     errorMessage.value = error

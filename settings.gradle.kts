@@ -11,6 +11,9 @@ pluginManagement {
         id("org.jetbrains.compose") version "1.5.10"  // Обновляем Compose до 1.5.10 или выше
     }
 }
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+}
 
 
 dependencyResolutionManagement {

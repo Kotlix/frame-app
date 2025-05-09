@@ -12,6 +12,8 @@ import presentation.viewmodel.HomeViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
+import ru.kotlix.frame.gateway.api.GatewayChatApi
+import ru.kotlix.frame.gateway.client.GatewayChatClient
 
 val homeModule = module {
     // OkHttpClient
@@ -92,9 +94,13 @@ val homeModule = module {
         UpdateChatUseCase()
     }
 
+    single {
+        GetAllDirectoriesUseCase(get())
+    }
+
 
     // ViewModel
     single {
-        HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
+        HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
     }
 }

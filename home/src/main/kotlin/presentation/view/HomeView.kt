@@ -15,10 +15,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import data.model.request.SendMessageRequest
 import di.homeModule
 import org.koin.core.context.startKoin
 import org.koin.mp.KoinPlatform
 import presentation.viewmodel.HomeViewModel
+import session.SessionManager
 
 class HomeView {
     @Composable
@@ -30,8 +32,8 @@ class HomeView {
         println("HomeScreen: Composable function is called")
 
         var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
-        var selectedCommunity by remember { mutableStateOf("") }
-        var serverError by remember { mutableStateOf<String?>(null) }
+        var selectedCommunityId by viewModel.selectedCommunityId
+        var serverError by viewModel.errorMessage
 
         val myCommunities by viewModel.myCommunities
         val yourStats = emptyList<String>()
@@ -115,13 +117,13 @@ class HomeView {
                             .padding(4.dp)
                     ) {
                         items(myCommunities) {
-                            val isSelected = it.name == selectedCommunity
+                            val isSelected = it.id.toString() == selectedCommunityId
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .background(if (isSelected) Color.LightGray else Color.Transparent)
                                     .clickable {
-                                        selectedCommunity = it.name
+                                        selectedCommunityId = it.id.toString()
                                         serverError = null
                                     }
                                     .padding(8.dp),
@@ -248,14 +250,34 @@ class HomeView {
     @Composable
     fun ChatMockScreen(viewModel: HomeViewModel) {
 
-        var selectedCommunity by remember { mutableStateOf("") }
+        var selectedCommunityId by viewModel.selectedCommunityId
+        var selectedChatId by viewModel.selectedChatId
+
         var serverError by remember { mutableStateOf<String?>(null) }
 
         val myCommunities by viewModel.myCommunities
         val yourStats = emptyList<String>()
 
         val communities by viewModel.communities
+        val chats by viewModel.chats
+        val messages by viewModel.messages
+        val directories by viewModel.directories
         val error by viewModel.errorMessage
+
+        val messageText = remember { mutableStateOf("") }
+
+        LaunchedEffect(key1 = "fetchChat") {
+            try {
+                viewModel.fetchCommunities()
+                viewModel.fetchMyCommunities()
+                viewModel.getAllDirectories(selectedCommunityId!!.toLong(), {})
+                viewModel.getAllChats(selectedCommunityId!!.toLong(), {})
+
+            } catch (e: Exception) {
+                println("LaunchedEffect: Error while calling fetchCommunities: ${e.message}")
+            }
+        }
+
 
         Row(modifier = Modifier.fillMaxSize().padding(4.dp)) {
 
@@ -267,27 +289,27 @@ class HomeView {
             ) {
 
                 // Community list
-                Column(
+                LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .border(1.dp, Color.Gray)
                         .padding(4.dp)
                 ) {
-                    myCommunities.forEachIndexed { index, it ->
-                        val isSelected = it.name == selectedCommunity
+                    items(myCommunities) { myComm ->
+                        val isSelected = myComm.id.toString() == selectedCommunityId
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(if (isSelected) Color.LightGray else Color.Transparent)
                                 .clickable {
-                                    selectedCommunity = it.name
+                                    selectedCommunityId = myComm.id.toString()
                                     serverError = null
                                 }
                                 .padding(8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(it.name)
-                            Text(yourStats.getOrNull(index) ?: "")
+                            Text(myComm.name)
+                            //Text(yourStats.getOrNull ?: "")
                         }
                     }
                 }
@@ -296,7 +318,7 @@ class HomeView {
             Spacer(modifier = Modifier.width(4.dp))
 
             // Средний столбец: элементы и чат
-            Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            Column(modifier = Modifier.weight(2f).fillMaxHeight()) {
 
                 // Верхняя панель (elements, chat)
                 Row(modifier = Modifier.fillMaxWidth()) {
@@ -320,18 +342,73 @@ class HomeView {
 
                 Row(modifier = Modifier.fillMaxSize()) {
                     // Элементы
-                    Column(
+                    LazyColumn(
                         modifier = Modifier
-                            .width(100.dp)
+                            .weight(0.5f)
                             .fillMaxHeight()
                             .border(1.dp, Color.Gray)
                             .padding(4.dp)
                     ) {
-                        Text("📁 root", modifier = Modifier.background(Color(0xFFDEEFFF)).padding(4.dp))
-                        Text("💬 chat", modifier = Modifier.background(Color(0xFFA6E3A1)).padding(4.dp))
-                        Text("🎙 voice", modifier = Modifier.background(Color(0xFFB4D3F2)).padding(4.dp))
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
+                        directories.forEach { dir ->
+                            item {
+                                LazyColumn {
+                                    Text("📁 ${dir.name}", modifier = Modifier
+                                        .background(Color(0xFFDEEFFF))
+                                        .padding(4.dp)
+                                        .clickable { }
+                                    )
+
+                                    Text("chats", modifier = Modifier
+                                        .background(Color(0xFFDEEFFF))
+                                        .padding(start = 10.dp, top = 4.dp, bottom = 4.dp)
+                                        .clickable { }
+                                    )
+
+                                    val filteredChats = chats.filter { it.directoryId == dir.directoryId }
+                                    items(filteredChats) { chat ->
+                                        Text(
+                                            "💬 ${chat.name}",
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(start = 16.dp, top = 2.dp, bottom = 2.dp)
+                                                .clickable {
+                                                    selectedChatId = chat.id.toString()
+                                                },
+                                            color = Color.DarkGray
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Button(onClick = {}, modifier = Modifier.width(40.dp)) { Text("+") }
+
+                                    Text("voices", modifier = Modifier
+                                        .background(Color(0xFFDEEFFF))
+                                        .padding(start = 10.dp, top = 4.dp, bottom = 4.dp)
+                                        .clickable { }
+                                    )
+
+//                            val filteredVoiceChats = chats.filter { it.directoryId == dir.directoryId }
+//                            items(filteredVoiceChats) { chat ->
+//                                Text(
+//                                    "🎙 ${chat.name}",
+//                                    modifier = Modifier
+//                                        .fillMaxWidth()
+//                                        .padding(start = 16.dp, top = 2.dp, bottom = 2.dp)
+//                                        .clickable { /* onChatClick(chat.id) */ },
+//                                    color = Color.DarkGray
+//                                )
+//                            }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Button(onClick = {}, modifier = Modifier.width(40.dp)) { Text("+") }
+
+
+                                }
+                            }
+                        }
+//                        Text("📁 root", modifier = Modifier.background(Color(0xFFDEEFFF)).padding(4.dp))
+//                        Text("💬 chat", modifier = Modifier.background(Color(0xFFA6E3A1)).padding(4.dp))
+//                        Text("🎙 voice", modifier = Modifier.background(Color(0xFFB4D3F2)).padding(4.dp))
                         Spacer(modifier = Modifier.height(4.dp))
                         Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
                     }
@@ -346,14 +423,70 @@ class HomeView {
                             .border(1.dp, Color.Gray)
                             .padding(4.dp)
                     ) {
-                        // Сообщения
-                        MessageBubble(sender = "onar", message = "Hello world!")
-                        MessageBubble(sender = "you", message = "Hello world!")
+                        LazyColumn(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            reverseLayout = true
+                        ) {
+                            val currentMessages = messages.filter { it.chatId == selectedChatId?.toLong() }
+                            items(currentMessages.sortedBy { it.createdAt }.reversed()) { message ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(4.dp),
+                                    contentAlignment = if (message.authorId == SessionManager.userId) Alignment.CenterEnd else Alignment.CenterStart
+                                ) {
+                                    MessageBubble(sender = "", message = message.message)
+                                }
+                            }
+                        }
 
-                        Spacer(modifier = Modifier.weight(1f))
+                        // --------TEXT MESSAGE--------
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(4.dp),
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            OutlinedTextField(
+                                value = messageText.value,
+                                onValueChange = { messageText.value = it },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .heightIn(min = 56.dp, max = 150.dp)
+                                    .verticalScroll(rememberScrollState()),
+                                label = { Text("Type your message...") },
+                                maxLines = 5
+                            )
 
-                        // Поле ввода и ошибка
-                        Text("type...", modifier = Modifier.fillMaxWidth().padding(4.dp).background(Color.LightGray))
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Button(
+                                onClick = {
+                                    println("Sending message: ${messageText.value}")
+                                    viewModel.sendMessage(
+                                        selectedCommunityId!!.toLong(),
+                                        selectedChatId!!.toLong(),
+                                        SendMessageRequest(
+                                            messageText.value
+                                        ),
+                                        {
+                                            viewModel.getAllMessages(chatId = selectedChatId!!.toLong(),
+                                                page = 0,
+                                                size = 50,
+                                                {
+
+                                                }
+                                            )
+                                        }
+                                    )
+                                    messageText.value = ""
+                                },
+                                modifier = Modifier.align(Alignment.Bottom)
+                            ) {
+                                Text("Send")
+                            }
+                        }
+                        // Ошибка
                         Box(
                             modifier = Modifier.fillMaxWidth().padding(top = 4.dp).background(Color(0xFFFFC0C0)),
                             contentAlignment = Alignment.CenterEnd
@@ -369,7 +502,7 @@ class HomeView {
             // Правая панель: пользователи
             Column(
                 modifier = Modifier
-                    .width(140.dp)
+                    .weight(0.5f)
                     .fillMaxHeight()
                     .border(1.dp, Color.Gray)
                     .padding(4.dp)
