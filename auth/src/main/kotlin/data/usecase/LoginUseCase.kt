@@ -20,12 +20,12 @@ class LoginUseCase(
 
                 if (response.isSuccessful) {
                     val token = response.body()!!
-                    callback(token, null)
+                    callback(token, response.toString())
                 } else {
-                    callback(null, "Error ${response.code()}: ${response.message()}")
+                    callback(null, response.toString())//"Error ${response.code()}: ${response.message()}")
                 }
             } catch (e: Exception) {
-                callback(null, e.message ?: "Unknown error")
+                callback(null, e.toString())//e.message ?: "Unknown error")
             }
         }
     }
