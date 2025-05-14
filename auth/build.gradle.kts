@@ -28,7 +28,7 @@ dependencies {
 
     implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
 
-    implementation(project(":home"))
+    //implementation(project(":home"))
     implementation(project(":core"))
 }
 

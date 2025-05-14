@@ -351,7 +351,7 @@ class HomeView {
                     ) {
                         directories.forEach { dir ->
                             item {
-                                LazyColumn {
+                                Column {
                                     Text("📁 ${dir.name}", modifier = Modifier
                                         .background(Color(0xFFDEEFFF))
                                         .padding(4.dp)
@@ -364,19 +364,19 @@ class HomeView {
                                         .clickable { }
                                     )
 
-                                    val filteredChats = chats.filter { it.directoryId == dir.directoryId }
-                                    items(filteredChats) { chat ->
-                                        Text(
-                                            "💬 ${chat.name}",
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(start = 16.dp, top = 2.dp, bottom = 2.dp)
-                                                .clickable {
-                                                    selectedChatId = chat.id.toString()
-                                                },
-                                            color = Color.DarkGray
-                                        )
-                                    }
+                                        val filteredChats = chats.filter { it.directoryId == dir.directoryId }
+                                        filteredChats.forEach { chat ->
+                                            Text(
+                                                "💬 ${chat.name}",
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(start = 16.dp, top = 2.dp, bottom = 2.dp)
+                                                    .clickable {
+                                                        selectedChatId = chat.id.toString()
+                                                    },
+                                                color = Color.DarkGray
+                                            )
+                                        }
 
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Button(onClick = {}, modifier = Modifier.width(40.dp)) { Text("+") }
@@ -409,8 +409,12 @@ class HomeView {
 //                        Text("📁 root", modifier = Modifier.background(Color(0xFFDEEFFF)).padding(4.dp))
 //                        Text("💬 chat", modifier = Modifier.background(Color(0xFFA6E3A1)).padding(4.dp))
 //                        Text("🎙 voice", modifier = Modifier.background(Color(0xFFB4D3F2)).padding(4.dp))
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
+                        item {
+                            Column {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.width(4.dp))

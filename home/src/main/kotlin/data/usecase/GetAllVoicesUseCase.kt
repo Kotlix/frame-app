@@ -19,7 +19,7 @@ class GetAllVoicesUseCase(
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = api.getAllVoices(communityId, token)
+                val response = api.getAllVoices(token, communityId)
 
                 if (response.isSuccessful) {
                     val resp = response.body()!!

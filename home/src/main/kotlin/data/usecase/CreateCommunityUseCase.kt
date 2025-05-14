@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ru.kotlix.frame.gateway.api.dto.requests.GatewayCreateCommunityRequest
 import ru.kotlix.frame.gateway.client.GatewayCommunityClient
+import ru.kotlix.frame.gateway.client.GatewayMessageClient
 
 class CreateCommunityUseCase(
     val api: GatewayCommunityClient
@@ -15,26 +16,25 @@ class CreateCommunityUseCase(
         name: String,
         desc: String?,
         isPublic: Long,
-        name: Long,
         directory: CreateDirectoryRequest,
         callback: (error: String?) -> Unit
     ) {
         CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val response = api.create(
-                    GatewayCreateCommunityRequest(
-
-                    )
-                )
-
-                if (response.isSuccessful) {
-                    callback(null)
-                } else {
-                    callback("Error ${response.code()}: ${response.message()}")
-                }
-            } catch (e: Exception) {
-                callback("Exception: ${e.message}")
-            }
+//            try {
+//                val response = api.create(
+//                    GatewayCreateCommunityRequest(
+//
+//                    )
+//                )
+//
+//                if (response.isSuccessful) {
+//                    callback(null)
+//                } else {
+//                    callback("Error ${response.code()}: ${response.message()}")
+//                }
+//            } catch (e: Exception) {
+//                callback("Exception: ${e.message}")
+//            }
         }
     }
 }

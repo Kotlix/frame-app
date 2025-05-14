@@ -139,7 +139,7 @@ class AuthView() {
     @Composable
     fun AuthApp(viewModel: AuthViewModel, callback: () -> Unit) {
         var showRegisterPopup by remember { mutableStateOf(false) }
-        var showAuthWindow by remember { mutableStateOf(true) }
+        //var showAuthWindow by remember { mutableStateOf(true) }
 
         val onRegisterClick: () -> Unit = {
             showRegisterPopup = true

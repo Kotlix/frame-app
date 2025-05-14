@@ -14,6 +14,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
 import ru.kotlix.frame.gateway.api.GatewayChatApi
 import ru.kotlix.frame.gateway.client.GatewayChatClient
+import ru.kotlix.frame.gateway.client.GatewayVoiceClient
 
 val homeModule = module {
     // OkHttpClient
@@ -24,7 +25,7 @@ val homeModule = module {
     // Retrofit instance
     single {
         Retrofit.Builder()
-            .baseUrl("http://localhost:8080")
+            .baseUrl("http://84.54.59.98:30084")
             //.baseUrl(AppConfig.BASE_URL)
             .client(get())
             .addConverterFactory(ScalarsConverterFactory.create())
@@ -33,6 +34,11 @@ val homeModule = module {
     }
 
     // API interface
+
+    single<GatewayVoiceClient> {
+        get<Retrofit>().create(GatewayVoiceClient::class.java)
+    }
+
     single<HomeApi> {
         get<Retrofit>().create(HomeApi::class.java)
     }
@@ -98,9 +104,12 @@ val homeModule = module {
         GetAllDirectoriesUseCase(get())
     }
 
+    single {
+        GetAllVoicesUseCase(get())
+    }
 
     // ViewModel
     single {
-        HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
+        HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
     }
 }
