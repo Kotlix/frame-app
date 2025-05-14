@@ -22,7 +22,7 @@ import presentation.viewstate.AuthState
 class AuthView() {
 
     @Composable
-    fun LoginScreen(viewModel: AuthViewModel, onRegisterClick: () -> Unit) {
+    fun LoginScreen(viewModel: AuthViewModel, onRegisterClick: () -> Unit, onClose: () -> Unit) {
         val login by viewModel.loginState
         val password by viewModel.passwordState
         val authState by viewModel.authState
@@ -116,7 +116,12 @@ class AuthView() {
                         Spacer(modifier = Modifier.height(8.dp))
 
                         when (authState) {
-                            is AuthState.LoginComplete -> Text("Authorized!", color = Color.Green)
+                            is AuthState.LoginComplete -> {
+                                Text("Authorized!", color = Color.Green)
+                                LaunchedEffect(authState) {
+                                    onClose()
+                                }
+                            }
                             is AuthState.Error -> Text(
                                 (authState as AuthState.Error).error,
                                 color = Color.Red
@@ -132,8 +137,9 @@ class AuthView() {
 
 
     @Composable
-    fun AuthApp(viewModel: AuthViewModel) {
+    fun AuthApp(viewModel: AuthViewModel, callback: () -> Unit) {
         var showRegisterPopup by remember { mutableStateOf(false) }
+        //var showAuthWindow by remember { mutableStateOf(true) }
 
         val onRegisterClick: () -> Unit = {
             showRegisterPopup = true
@@ -146,13 +152,13 @@ class AuthView() {
         if (showRegisterPopup) {
             RegisterPopup().RegisterPopup(viewModel = viewModel, onClose = onCloseRegisterPopup)
         } else {
-            LoginScreen(viewModel = viewModel, onRegisterClick = onRegisterClick)
+            LoginScreen(viewModel = viewModel, onRegisterClick = onRegisterClick, onClose = callback)
         }
     }
 
     @Composable
     @Preview
-    fun AuthAppPreview(viewModel: AuthViewModel) {
-        AuthView().AuthApp(viewModel = viewModel)
+    fun AuthAppPreview(viewModel: AuthViewModel, callback: () -> Unit) {
+        AuthView().AuthApp(viewModel = viewModel, callback)
     }
 }
