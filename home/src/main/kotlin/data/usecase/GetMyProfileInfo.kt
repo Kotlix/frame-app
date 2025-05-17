@@ -1,35 +1,31 @@
 package data.usecase
 
-import data.HomeApi
-import dto.CommunityEntity
+import data.model.response.ProfileInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import ru.kotlix.frame.gateway.client.GatewayCommunityClient
+import ru.kotlix.frame.gateway.client.GatewayProfileClient
 
-class FetchMyCommunitiesUseCase(
-    private val api: GatewayCommunityClient
+class GetMyProfileInfo(
+    private val api: GatewayProfileClient
 ) {
     fun execute(
         token: String,
-        callback: (data: List<CommunityEntity>?, error: String?) -> Unit
+        callback: (data: ProfileInfo?, error: String?) -> Unit
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = api.findAllMine(
-                    token
-                )
+                val response = api.getMyProfileInfo(token)
 
                 if (response.isSuccessful) {
                     val resp = response.body()!!
-                    val result = resp.map {
-                        CommunityEntity(
-                            it.id,
-                            it.name,
-                            it.description,
-                            it.isPublic
+                    val result =
+                        ProfileInfo(
+                            resp.id,
+                            resp.login,
+                            resp.username,
+                            resp.email
                         )
-                    }
                     callback(result, null)
                 } else {
                     callback(null, "Error ${response.code()}: ${response.message()}")
@@ -39,4 +35,5 @@ class FetchMyCommunitiesUseCase(
             }
         }
     }
+
 }

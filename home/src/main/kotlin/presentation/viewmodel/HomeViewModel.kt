@@ -5,6 +5,7 @@ import data.model.request.CreateChatRequest
 import data.model.request.CreateDirectoryRequest
 import data.model.request.SendMessageRequest
 import data.model.response.ChatDto
+import data.model.response.ProfileInfo
 import data.usecase.*
 import dto.*
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +29,8 @@ class HomeViewModel(
     private val getAllMessagesUseCase: GetAllMessagesUseCase,
     private val updateChatUseCase: UpdateChatUseCase,
     private val getAllDirectoriesUseCase: GetAllDirectoriesUseCase,
-    private val getAllVoicesUseCase: GetAllVoicesUseCase
+    private val getAllVoicesUseCase: GetAllVoicesUseCase,
+    private val getMyProfileInfo: GetMyProfileInfo
 ) {
 
     private val viewModelScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -64,6 +66,9 @@ class HomeViewModel(
         private set
 
     var voiceServers = mutableStateOf<Map<String, List<String>>>(emptyMap())
+        private set
+
+    var profile = mutableStateOf<ProfileInfo?>(null)
         private set
 
     // присоединиться/покинуть сообщество
@@ -117,9 +122,10 @@ class HomeViewModel(
 
     fun fetchVoiceServers() {
         fetchVoiceServersUseCase.execute(
-            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            token = getToken()  //// INSERT!!!!!!!!!!!!
         ) { data, error ->
             viewModelScope.launch(Dispatchers.Default) {
+                println(data.toString())
                 if (data != null) {
                     voiceServers.value = data
                     errorMessage.value = null
@@ -234,10 +240,27 @@ class HomeViewModel(
         }
     }
 
-    fun sendMessage(communityId: Long, chatId: Long, message: SendMessageRequest, callback: () -> Unit) {
+    fun getMyProfileInfo(callback: () -> Unit) {
+        getMyProfileInfo.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+        ) { data, error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                if (data != null) {
+                    profile.value = data
+                    errorMessage.value = null
+                } else {
+                    errorMessage.value = error
+                }
+
+                callback()
+            }
+        }
+    }
+
+    fun sendMessage(chatId: Long, message: SendMessageRequest, callback: () -> Unit) {
         sendMessageUseCase.execute(
             token = getToken(),  //// INSERT!!!!!!!!!!!!
-            chatId = communityId,
+            chatId = chatId,
             messageDto = message,
         ) { error ->
             viewModelScope.launch(Dispatchers.Default) {

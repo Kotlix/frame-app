@@ -32,6 +32,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.7.3")
     implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
 
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+
 
     implementation(project(":core"))
 }

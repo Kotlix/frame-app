@@ -9,9 +9,11 @@ import dto.CommunityEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import ru.kotlix.frame.gateway.api.GatewayChatApi
+import ru.kotlix.frame.gateway.client.GatewayChatClient
 
 class GetAllChatsUseCase(
-    private val api: ChatApi
+    private val api: GatewayChatClient
 ) {
     fun execute(
         token: String,
@@ -20,7 +22,7 @@ class GetAllChatsUseCase(
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = api.getAllChats(communityId, token)
+                val response = api.getAllChats(token, communityId)
 
                 if (response.isSuccessful) {
                     val resp = response.body()!!

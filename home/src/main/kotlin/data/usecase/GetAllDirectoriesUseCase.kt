@@ -7,9 +7,10 @@ import dto.DirectoryEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import ru.kotlix.frame.gateway.client.GatewayDirectoryClient
 
 class GetAllDirectoriesUseCase(
-    private val api: DirectoryApi
+    private val api: GatewayDirectoryClient
 ) {
     fun execute(
         token: String,
@@ -18,7 +19,7 @@ class GetAllDirectoriesUseCase(
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = api.getAllDirectories(communityId, token)
+                val response = api.getAllDirectories(token, communityId)
 
                 if (response.isSuccessful) {
                     val resp = response.body()!!

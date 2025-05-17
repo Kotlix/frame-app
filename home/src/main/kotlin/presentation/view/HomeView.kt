@@ -27,6 +27,7 @@ class HomeView {
     fun HomeScreen(
         viewModel: HomeViewModel,
         onSearchClick: () -> Unit = {},
+        onCommunityClick: () -> Unit = {},
         onProfileClick: () -> Unit = {}
     ) {
         println("HomeScreen: Composable function is called")
@@ -135,6 +136,7 @@ class HomeView {
                                     .clickable {
                                         selectedCommunityId = it.id.toString()
                                         serverError = null
+                                        onCommunityClick()
                                     }
                                     .padding(8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -280,6 +282,7 @@ class HomeView {
         val chats by viewModel.chats
         val messages by viewModel.messages
         val directories by viewModel.directories
+        val myProfile by viewModel.profile
         val error by viewModel.errorMessage
 
         val messageText = remember { mutableStateOf("") }
@@ -288,8 +291,10 @@ class HomeView {
             try {
                 viewModel.fetchCommunities()
                 viewModel.fetchMyCommunities()
+                viewModel.getMyProfileInfo{ }
                 viewModel.getAllDirectories(selectedCommunityId!!.toLong(), {})
                 viewModel.getAllChats(selectedCommunityId!!.toLong(), {})
+                viewModel.getAllVoices(selectedCommunityId!!.toLong(), {})
 
             } catch (e: Exception) {
                 println("LaunchedEffect: Error while calling fetchCommunities: ${e.message}")
@@ -390,8 +395,9 @@ class HomeView {
                                         .clickable { }
                                     )
 
-                                        val filteredChats = chats.filter { it.directoryId == dir.directoryId }
+                                        val filteredChats = chats.filter { it.directoryId == dir.id }
                                         filteredChats.forEach { chat ->
+                                            println("💬 ${chat.name}")
                                             Text(
                                                 "💬 ${chat.name}",
                                                 modifier = Modifier
@@ -494,7 +500,6 @@ class HomeView {
                                 onClick = {
                                     println("Sending message: ${messageText.value}")
                                     viewModel.sendMessage(
-                                        selectedCommunityId!!.toLong(),
                                         selectedChatId!!.toLong(),
                                         SendMessageRequest(
                                             messageText.value
@@ -585,6 +590,30 @@ class HomeView {
                 Text("X", fontSize = 12.sp)
             }
         }
+    }
+
+    @Composable
+    fun HomeView(
+        viewModel: HomeViewModel
+    ) {
+        var showCommunityScreen by remember { mutableStateOf(false) }
+
+        val onCommunityClick: () -> Unit = {
+            showCommunityScreen = true
+        }
+
+        if (showCommunityScreen) {
+            HomeView().CommunityScreen(KoinPlatform.getKoin().get<HomeViewModel>())
+
+        } else {
+            HomeView().HomeScreen(
+                viewModel,
+                onSearchClick = { println("Navigate to Home/Search") },
+                onCommunityClick = onCommunityClick,
+                onProfileClick = { println("Navigate to Profile") }
+            )
+        }
+
     }
 
 

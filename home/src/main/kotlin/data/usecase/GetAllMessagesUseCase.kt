@@ -6,9 +6,10 @@ import dto.MessageEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import ru.kotlix.frame.gateway.client.GatewayMessageClient
 
 class GetAllMessagesUseCase(
-    val api: MessageApi
+    val api: GatewayMessageClient
 ) {
     fun execute(
         token: String,
@@ -19,7 +20,7 @@ class GetAllMessagesUseCase(
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = api.getMessages(chatId, page, size, token)
+                val response = api.getMessages(token, chatId, page, size)
 
                 if (response.isSuccessful) {
                     val resp = response.body()!!

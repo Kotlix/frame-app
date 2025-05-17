@@ -5,9 +5,10 @@ import dto.CommunityEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import ru.kotlix.frame.gateway.client.GatewayCommunityClient
 
 class LeaveCommunityUseCase(
-    private val api: HomeApi
+    private val api: GatewayCommunityClient
 ) {
     fun execute(
         token: String,

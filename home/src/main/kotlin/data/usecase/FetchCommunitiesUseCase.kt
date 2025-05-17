@@ -5,9 +5,10 @@ import dto.CommunityEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import ru.kotlix.frame.gateway.client.GatewayCommunityClient
 
 class FetchCommunitiesUseCase(
-    private val api: HomeApi
+    private val api: GatewayCommunityClient
 ) {
     fun execute(
         token: String,
@@ -18,12 +19,12 @@ class FetchCommunitiesUseCase(
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = api.findPublicCommunities( token,
+                val response = api.findAllPublicWithFilter(token,
                     name, pageOffset, pageCount)
 
                 if (response.isSuccessful) {
                     val resp = response.body()!!
-                    val result = resp.data.map {
+                    val result = resp.map {
                         CommunityEntity(
                             it.id,
                             it.name,
