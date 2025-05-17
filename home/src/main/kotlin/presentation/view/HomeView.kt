@@ -32,6 +32,7 @@ class HomeView {
         println("HomeScreen: Composable function is called")
 
         var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
+        var showCreatePopup by remember { mutableStateOf(false) }
         var selectedCommunityId by viewModel.selectedCommunityId
         var serverError by viewModel.errorMessage
 
@@ -82,6 +83,15 @@ class HomeView {
                     Text("Find public communities")
                 }
                 Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    onClick = {
+                        showCreatePopup = true
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0x34dbebe0))
+                ) {
+                    Text("Create Community")
+                }
 
                 Button(
                     onClick = onSearchClick,
@@ -231,6 +241,14 @@ class HomeView {
                 }
             }
 
+            // Показываем окно, если showCreatePopup = true
+            if (showCreatePopup) {
+                CreateCommunityPopup().CreateCommunityPopup(viewModel) {
+                    showCreatePopup = false
+                    viewModel.fetchMyCommunities()
+                }
+            }
+
             // Server Error block
             if (serverError != null) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -248,7 +266,7 @@ class HomeView {
     }
 
     @Composable
-    fun ChatMockScreen(viewModel: HomeViewModel) {
+    fun CommunityScreen(viewModel: HomeViewModel) {
 
         var selectedCommunityId by viewModel.selectedCommunityId
         var selectedChatId by viewModel.selectedChatId
@@ -318,7 +336,15 @@ class HomeView {
             Spacer(modifier = Modifier.width(4.dp))
 
             // Средний столбец: элементы и чат
+
             Column(modifier = Modifier.weight(2f).fillMaxHeight()) {
+//
+//                Button(onClick = {
+//                    CreateCommunityPopup().CreateCommunityPopup(viewModel) {
+//                        viewModel.fetchMyCommunities()
+//                    }
+//                }, modifier = Modifier.width(40.dp)) { Text("Create community") }
+
 
                 // Верхняя панель (elements, chat)
                 Row(modifier = Modifier.fillMaxWidth()) {
@@ -571,12 +597,12 @@ class HomeView {
 
         Window(onCloseRequest = ::exitApplication, title = "Frame") {
             MaterialTheme {
-//                HomeView().HomeScreen(
-//                    KoinPlatform.getKoin().get<HomeViewModel>(),
-//                    onSearchClick = { println("Navigate to Home/Search") },
-//                    onProfileClick = { println("Navigate to Profile") }
-//                )
-                HomeView().ChatMockScreen(KoinPlatform.getKoin().get<HomeViewModel>())
+                HomeView().HomeScreen(
+                    KoinPlatform.getKoin().get<HomeViewModel>(),
+                    onSearchClick = { println("Navigate to Home/Search") },
+                    onProfileClick = { println("Navigate to Profile") }
+                )
+                //HomeView().ChatMockScreen(KoinPlatform.getKoin().get<HomeViewModel>())
             }
         }
     }

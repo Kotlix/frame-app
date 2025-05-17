@@ -16,8 +16,10 @@ import session.SessionManager
 class HomeViewModel(
     private val fetchCommunitiesUseCase: FetchCommunitiesUseCase,
     private val fetchMyCommunitiesUseCase: FetchMyCommunitiesUseCase,
+    private val fetchVoiceServersUseCase: FetchVoiceServersUseCase,
     private val joinCommunityUseCase: JoinCommunityUseCase,
     private val leaveCommunityUseCase: LeaveCommunityUseCase,
+    private val createCommunityUseCase: CreateCommunityUseCase,
     private val createChatUseCase: CreateChatUseCase,
     private val createDirectoryUseCase: CreateDirectoryUseCase,
     private val deleteChatUseCase: DeleteChatUseCase,
@@ -59,6 +61,9 @@ class HomeViewModel(
         private set
 
     var messages = mutableStateOf<List<MessageEntity>>(emptyList())
+        private set
+
+    var voiceServers = mutableStateOf<Map<String, List<String>>>(emptyMap())
         private set
 
     // присоединиться/покинуть сообщество
@@ -110,6 +115,21 @@ class HomeViewModel(
         }
     }
 
+    fun fetchVoiceServers() {
+        fetchVoiceServersUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+        ) { data, error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                if (data != null) {
+                    voiceServers.value = data
+                    errorMessage.value = null
+                } else {
+                    errorMessage.value = error
+                }
+            }
+        }
+    }
+
     fun joinCommunity(communityId: Long, callback: () -> Unit) {
         joinCommunityUseCase.execute(
             token = getToken(),  //// INSERT!!!!!!!!!!!!
@@ -150,6 +170,25 @@ class HomeViewModel(
 
     fun getToken(): String {
         return SessionManager.token ?: ""
+    }
+
+    fun createCommunity(name: String, desc: String, isPublic: Boolean, voiceRegion: String, voiceName: String, callback: () -> Unit) {
+        createCommunityUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            name = name,
+            desc = desc,
+            isPublic = isPublic,
+            voiceRegion = voiceRegion,
+            voiceName = voiceName
+        ) { community, error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                if (community != null) {
+                    myCommunities.value += community
+                }
+                errorMessage.value = error
+                callback()
+            }
+        }
     }
 
     fun createDirectory(communityId: Long, directory: CreateDirectoryRequest, callback: () -> Unit) {

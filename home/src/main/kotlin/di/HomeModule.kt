@@ -14,6 +14,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
 import ru.kotlix.frame.gateway.api.GatewayChatApi
 import ru.kotlix.frame.gateway.client.GatewayChatClient
+import ru.kotlix.frame.gateway.client.GatewayCommunityClient
+import ru.kotlix.frame.gateway.client.GatewayServerClient
 import ru.kotlix.frame.gateway.client.GatewayVoiceClient
 
 val homeModule = module {
@@ -37,6 +39,14 @@ val homeModule = module {
 
     single<GatewayVoiceClient> {
         get<Retrofit>().create(GatewayVoiceClient::class.java)
+    }
+
+    single<GatewayServerClient> {
+        get<Retrofit>().create(GatewayServerClient::class.java)
+    }
+
+    single<GatewayCommunityClient> {
+        get<Retrofit>().create(GatewayCommunityClient::class.java)
     }
 
     single<HomeApi> {
@@ -108,8 +118,17 @@ val homeModule = module {
         GetAllVoicesUseCase(get())
     }
 
+    single {
+        CreateCommunityUseCase(get())
+    }
+
+    single {
+        FetchVoiceServersUseCase(get())
+    }
+
     // ViewModel
     single {
-        HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
+        HomeViewModel(get(), get(), get(), get(), get(), get(), get(),
+            get(), get(), get(), get(), get(), get(), get(), get())
     }
 }
