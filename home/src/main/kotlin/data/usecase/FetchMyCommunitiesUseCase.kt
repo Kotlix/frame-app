@@ -6,9 +6,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ru.kotlix.frame.gateway.client.GatewayCommunityClient
+import ru.kotlix.frame.gateway.client.GatewayMessageClient
 
 class FetchMyCommunitiesUseCase(
-    private val api: GatewayCommunityClient
+    private val api: GatewayCommunityClient,
+    //private val mess: GatewayMessageClient
 ) {
     fun execute(
         token: String,
@@ -19,6 +21,8 @@ class FetchMyCommunitiesUseCase(
                 val response = api.findAllMine(
                     token
                 )
+
+                //val res = mess.getMessages("0", 0, 0, 0)
 
                 if (response.isSuccessful) {
                     val resp = response.body()!!

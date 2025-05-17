@@ -270,7 +270,27 @@ class HomeViewModel(
         }
     }
 
-    fun getAllMessages(chatId: Long, page: Long, size: Long, callback: () -> Unit) {
+    fun getAllMessages(chatId: Long, page: Long = 0, size: Long = 50, callback: () -> Unit) {
+        getAllMessagesUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            chatId = chatId,
+            page = page,
+            size = size
+        ) { data, error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                if (data != null) {
+                    messages.value = data
+                    errorMessage.value = null
+                } else {
+                    errorMessage.value = error
+                }
+                errorMessage.value = error
+                callback()
+            }
+        }
+    }
+
+    fun getUserNameMap(chatId: Long, page: Long = 0, size: Long = 50, callback: () -> Unit) {
         getAllMessagesUseCase.execute(
             token = getToken(),  //// INSERT!!!!!!!!!!!!
             chatId = chatId,

@@ -1,6 +1,7 @@
 package di
 
 import AppConfig
+import com.google.gson.GsonBuilder
 import data.ChatApi
 import data.DirectoryApi
 import data.HomeApi
@@ -14,6 +15,9 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
 import ru.kotlix.frame.gateway.client.*
+import utils.LocalDateTimeAdapter
+import java.time.LocalDateTime
+import java.util.concurrent.TimeUnit
 
 
 val homeModule = module {
@@ -26,12 +30,16 @@ val homeModule = module {
 
     // Retrofit instance
     single {
+        val gson = GsonBuilder()
+            .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
+            .create()
+
         Retrofit.Builder()
             //.baseUrl("http://84.54.59.98:30084")
             .baseUrl(AppConfig.BASE_URL)
             .client(get())
             .addConverterFactory(ScalarsConverterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 
@@ -58,6 +66,18 @@ val homeModule = module {
     }
 
     single<GatewayMessageClient> {
+//        val interceptor = HttpLoggingInterceptor()
+//        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
+//        Retrofit.Builder()
+//            //.baseUrl("http://84.54.59.98:30084")
+//            .baseUrl(AppConfig.BASE_URL)
+//            .client(OkHttpClient.Builder().connectTimeout(1000, TimeUnit.SECONDS)
+//                .readTimeout(1000, TimeUnit.SECONDS)
+//                .writeTimeout(1000, TimeUnit.SECONDS).addInterceptor(interceptor).build()
+//            )
+//            .addConverterFactory(GsonConverterFactory.create())
+//            .build().create(GatewayMessageClient::class.java)
+
         get<Retrofit>().create(GatewayMessageClient::class.java)
     }
 

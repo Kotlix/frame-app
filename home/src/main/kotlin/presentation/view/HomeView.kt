@@ -287,7 +287,7 @@ class HomeView {
 
         val messageText = remember { mutableStateOf("") }
 
-        LaunchedEffect(key1 = "fetchChat") {
+        LaunchedEffect(selectedCommunityId) {
             try {
                 viewModel.fetchCommunities()
                 viewModel.fetchMyCommunities()
@@ -298,6 +298,14 @@ class HomeView {
 
             } catch (e: Exception) {
                 println("LaunchedEffect: Error while calling fetchCommunities: ${e.message}")
+            }
+        }
+
+        LaunchedEffect(selectedChatId) {
+            println(messages.toString())
+
+            selectedChatId?.let {
+                viewModel.getAllMessages(selectedChatId!!.toLong(), callback = {})
             }
         }
 
@@ -397,7 +405,7 @@ class HomeView {
 
                                         val filteredChats = chats.filter { it.directoryId == dir.id }
                                         filteredChats.forEach { chat ->
-                                            println("💬 ${chat.name}")
+                                           // println("💬 ${chat.name}")
                                             Text(
                                                 "💬 ${chat.name}",
                                                 modifier = Modifier
@@ -405,6 +413,7 @@ class HomeView {
                                                     .padding(start = 16.dp, top = 2.dp, bottom = 2.dp)
                                                     .clickable {
                                                         selectedChatId = chat.id.toString()
+                                                        println("💬 ${selectedChatId}")
                                                     },
                                                 color = Color.DarkGray
                                             )
@@ -433,8 +442,6 @@ class HomeView {
 
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Button(onClick = {}, modifier = Modifier.width(40.dp)) { Text("+") }
-
-
                                 }
                             }
                         }
@@ -469,7 +476,7 @@ class HomeView {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(4.dp),
-                                    contentAlignment = if (message.authorId == SessionManager.userId) Alignment.CenterEnd else Alignment.CenterStart
+                                    contentAlignment = if (message.authorId == myProfile?.id) Alignment.CenterEnd else Alignment.CenterStart
                                 ) {
                                     MessageBubble(sender = "", message = message.message)
                                 }
@@ -498,23 +505,25 @@ class HomeView {
 
                             Button(
                                 onClick = {
-                                    println("Sending message: ${messageText.value}")
-                                    viewModel.sendMessage(
-                                        selectedChatId!!.toLong(),
-                                        SendMessageRequest(
-                                            messageText.value
-                                        ),
-                                        {
-                                            viewModel.getAllMessages(chatId = selectedChatId!!.toLong(),
-                                                page = 0,
-                                                size = 50,
-                                                {
+                                    if (messageText.value.isNotBlank()) {
+                                        println("Sending message: ${messageText.value}")
+                                        viewModel.sendMessage(
+                                            selectedChatId!!.toLong(),
+                                            SendMessageRequest(
+                                                messageText.value
+                                            ),
+                                            {
+                                                viewModel.getAllMessages(chatId = selectedChatId!!.toLong(),
+                                                    page = 0,
+                                                    size = 50,
+                                                    {
 
-                                                }
-                                            )
-                                        }
-                                    )
-                                    messageText.value = ""
+                                                    }
+                                                )
+                                            }
+                                        )
+                                        messageText.value = ""
+                                    }
                                 },
                                 modifier = Modifier.align(Alignment.Bottom)
                             ) {
