@@ -4,6 +4,7 @@ import java.net.URI
 plugins {
     kotlin("jvm") version "1.9.22" apply false
     id("org.jetbrains.compose") version "1.6.0" apply false
+    id("com.google.protobuf") version "0.9.5" apply false
 }
 
 fun RepositoryHandler.kotlix(repo: String) = maven {
@@ -21,6 +22,7 @@ allprojects {
         google()
         mavenCentral()
         kotlix("frame-gateway")
+        kotlix("frame-session")
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
 }
