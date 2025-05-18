@@ -10,14 +10,17 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import presentation.viewstate.AuthState
 import session.SessionManager
+import session.client.exception.ConnectionFailedException
 
 class AuthViewModel(
     private val loginUseCase: LoginUseCase,
     private val registerUseCase: RegisterUseCase,
     private val verifyCodeUseCase: VerifyCodeUseCase
 ) {
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     private val viewModelScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -58,12 +61,20 @@ class AuthViewModel(
         loginUseCase.execute(login, password) { token, error ->
             viewModelScope.launch(Dispatchers.Default) {
                 if (token != null) {
-                    SessionManager.token = "Bearer " + token
-                    authState.value = AuthState.LoginComplete
-                    println(token.toString())
+                    logger.info(token)
 
+                    try {
+                        SessionManager.sessionClient.connectAuthorize(token)
+
+                        SessionManager.token = "Bearer $token"
+                        authState.value = AuthState.LoginComplete
+                    }catch (ex: ConnectionFailedException) {
+                        logger.error("connectAuthorize throw", ex)
+                        authState.value = AuthState.Error(error ?: "Unknown error")
+                    }
                 } else {
-                    println(error.toString())
+                    logger.error(error)
+
                     authState.value = AuthState.Error(error ?: "Unknown error")
                 }
             }

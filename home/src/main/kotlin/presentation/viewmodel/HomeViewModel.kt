@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import session.SessionManager
 
 class HomeViewModel(
@@ -32,6 +33,8 @@ class HomeViewModel(
     private val getAllVoicesUseCase: GetAllVoicesUseCase,
     private val getMyProfileInfo: GetMyProfileInfo
 ) {
+
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     private val viewModelScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -83,7 +86,7 @@ class HomeViewModel(
             }
         }
         fetchMyCommunities()
-       // communitiesState.value = updated
+        // communitiesState.value = updated
     }
 
 
@@ -113,6 +116,19 @@ class HomeViewModel(
                 if (data != null) {
                     myCommunities.value = data
                     errorMessage.value = null
+
+                    try {
+                        val communities = data.map { it.id }
+                        val success = SessionManager.sessionClient.updateMessageNotificationPreferences(communities)
+
+                        if (success) {
+                            logger.info("Notification preferences AGREED: $communities.")
+                        } else {
+                            logger.warn("Notification preferences DISAGREED: $communities.")
+                        }
+                    } catch (ex: Exception) {
+                        logger.error("Notification preferences push error.", ex)
+                    }
                 } else {
                     errorMessage.value = error
                 }
@@ -178,7 +194,14 @@ class HomeViewModel(
         return SessionManager.token ?: ""
     }
 
-    fun createCommunity(name: String, desc: String, isPublic: Boolean, voiceRegion: String, voiceName: String, callback: () -> Unit) {
+    fun createCommunity(
+        name: String,
+        desc: String,
+        isPublic: Boolean,
+        voiceRegion: String,
+        voiceName: String,
+        callback: () -> Unit
+    ) {
         createCommunityUseCase.execute(
             token = getToken(),  //// INSERT!!!!!!!!!!!!
             name = name,

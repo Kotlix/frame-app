@@ -3,6 +3,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 plugins {
     kotlin("jvm")
     id("org.jetbrains.compose")
+//    id("com.google.protobuf")
 }
 
 group = "ru.kotlix"
@@ -18,6 +19,10 @@ dependencies {
     //implementation(platform("org.jetbrains.compose:compose-bom:2023.06.00")) // Попробуй более новую версию
     //implementation("org.jetbrains.compose.desktop:desktop-common")
 
+    implementation("ru.kotlix:frame-session-api-proto:1.0.1-SNAPSHOT")
+
+    implementation("com.google.protobuf:protobuf-java:4.28.2")
+    implementation("io.netty:netty-all:4.1.114.Final")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
