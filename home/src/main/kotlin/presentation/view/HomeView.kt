@@ -293,6 +293,7 @@ class HomeView {
         val messageText = remember { mutableStateOf("") }
 
         var toggleNotification by remember { mutableStateOf<Boolean>(false) }
+        var kafkaId by remember { mutableStateOf<Long>(0) }
 
         LaunchedEffect(selectedCommunityId) {
             try {
@@ -311,12 +312,16 @@ class HomeView {
             }
         }
 
-        LaunchedEffect(selectedChatId to toggleNotification) {
-            println(messages.toString())
+        fun delete() {
+            SessionManager.sessionClient.getPacketListener().remove(kafkaId)
+        }
 
+        LaunchedEffect(selectedChatId to toggleNotification) {
             selectedChatId?.let {
                 viewModel.getAllMessages(selectedChatId!!.toLong(), callback = { })
-                SessionManager.sessionClient.getPacketListener().register(ServerPacketFilter { it.hasMessageNotify() },
+                SessionManager.sessionClient.getPacketListener()
+                delete()
+                kafkaId = SessionManager.sessionClient.getPacketListener().register(ServerPacketFilter { it.hasMessageNotify() },
                     ServerPacketListenerWatcher.Once) {
                     toggleNotification = !toggleNotification
                 }

@@ -1,10 +1,12 @@
 package session.client.handler
 
+import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import ru.kotlix.frame.session.api.proto.SessionContract
 import java.util.concurrent.ConcurrentHashMap
 
+@Sharable
 class ServerPacketListenerRegistryImpl : SimpleChannelInboundHandler<SessionContract.ServerPacket>(),
     ServerPacketListenerRegistry {
     data class ListenerEntry(

@@ -25,7 +25,7 @@ val homeModule = module {
     single {
         val interceptor = HttpLoggingInterceptor()
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
-        OkHttpClient.Builder()//.addInterceptor(interceptor).build()
+        OkHttpClient.Builder().addInterceptor(interceptor).build()
     }
 
     // Retrofit instance
