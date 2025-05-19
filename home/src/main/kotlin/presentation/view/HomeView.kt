@@ -311,21 +311,7 @@ class HomeView {
             }
         }
 
-        LaunchedEffect(selectedChatId) {
-            println(messages.toString())
-
-            selectedChatId?.let {
-                viewModel.getAllMessages(selectedChatId!!.toLong(), callback = { })
-                SessionManager.sessionClient.getPacketListener().register(ServerPacketFilter { it.hasMessageNotify() },
-                    ServerPacketListenerWatcher.Once) {
-                    println("INVEEERT 11111")
-
-                    toggleNotification = !toggleNotification
-                }
-            }
-        }
-
-        LaunchedEffect(toggleNotification) {
+        LaunchedEffect(selectedChatId to toggleNotification) {
             println(messages.toString())
 
             selectedChatId?.let {
@@ -336,7 +322,6 @@ class HomeView {
                 }
             }
         }
-
 
         Row(modifier = Modifier.fillMaxSize().padding(4.dp)) {
 
