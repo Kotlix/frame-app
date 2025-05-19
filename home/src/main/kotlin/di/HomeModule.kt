@@ -25,7 +25,7 @@ val homeModule = module {
     single {
         val interceptor = HttpLoggingInterceptor()
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
-        OkHttpClient.Builder().addInterceptor(interceptor).build()
+        OkHttpClient.Builder()//.addInterceptor(interceptor).build()
     }
 
     // Retrofit instance
@@ -83,6 +83,10 @@ val homeModule = module {
 
     single<GatewayDirectoryClient> {
         get<Retrofit>().create(GatewayDirectoryClient::class.java)
+    }
+
+    single<GatewayUserStateClient> {
+        get<Retrofit>().create(GatewayUserStateClient::class.java)
     }
 
     single<HomeApi> {
@@ -167,13 +171,25 @@ val homeModule = module {
     }
 
     single {
+        GetProfileInfoUseCase(get())
+    }
+
+    single {
         GetAllDirectoriesUseCase(get())
     }
 
+    single {
+        GetMembersUseCase(get())
+    }
+
+    single {
+        GetUserStateUseCase(get())
+    }
 
     // ViewModel
     single {
         HomeViewModel(get(), get(), get(), get(), get(), get(), get(),
-            get(), get(), get(), get(), get(), get(), get(), get(), get())
+            get(), get(), get(), get(), get(), get(), get(), get(), get(),
+            get(), get(), get())
     }
 }

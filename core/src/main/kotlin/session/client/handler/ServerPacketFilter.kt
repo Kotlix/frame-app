@@ -2,13 +2,11 @@ package session.client.handler
 
 import ru.kotlix.frame.session.api.proto.SessionContract
 
-interface ServerPacketFilter {
+fun interface ServerPacketFilter {
     fun shouldAccept(pkt: SessionContract.ServerPacket): Boolean
 
     companion object {
-        val All = object : ServerPacketFilter {
-            override fun shouldAccept(pkt: SessionContract.ServerPacket): Boolean = true
-        }
+        val All = ServerPacketFilter { true }
     }
 
     class ServerResponseForPid(private val pid: Long) : ServerPacketFilter {

@@ -1,34 +1,30 @@
 package data.usecase
 
-import data.model.response.ProfileInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
+import ru.kotlix.frame.gateway.client.GatewayCommunityClient
 import ru.kotlix.frame.gateway.client.GatewayProfileClient
 
-class GetMyProfileInfo(
-    private val api: GatewayProfileClient
+class GetMembersUseCase(
+    private val api: GatewayCommunityClient
 ) {
     val logger = LoggerFactory.getLogger(this::class.java)
     fun execute(
         token: String,
-        callback: (data: ProfileInfo?, error: String?) -> Unit
+        communityId: Long,
+        callback: (username: List<Long>?, error: String?) -> Unit
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = api.getMyProfileInfo(token)
+                val response = api.getMembers(token, communityId)
 
                 if (response.isSuccessful) {
-                    val resp = response.body()!!
-                    val result =
-                        ProfileInfo(
-                            resp.id,
-                            resp.login,
-                            resp.username,
-                            resp.email
-                        )
-                    callback(result, null)
+                    val resp = response.body()!!.map {
+                        it.userId
+                    }
+                    callback(resp, null)
                 } else {
                     callback(null, "Error ${response.code()}: ${response.message()}")
                 }

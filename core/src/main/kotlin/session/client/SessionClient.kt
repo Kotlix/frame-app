@@ -1,6 +1,7 @@
 package session.client
 
 import session.client.exception.ConnectionFailedException
+import session.client.handler.ServerPacketListenerRegistry
 import kotlin.jvm.Throws
 
 interface SessionClient {
@@ -10,6 +11,8 @@ interface SessionClient {
     fun isConnected(): Boolean
 
     fun disconnect()
+
+    fun getPacketListener(): ServerPacketListenerRegistry
 
     suspend fun updateMessageNotificationPreferences(communityId: List<Long>): Boolean
 }

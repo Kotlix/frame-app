@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory
 import ru.kotlix.frame.session.api.proto.SessionContract
 import session.client.exception.ConnectionFailedException
 import session.client.handler.ServerPacketFilter
+import session.client.handler.ServerPacketListenerRegistry
 import session.client.handler.ServerPacketListenerRegistryImpl
 import session.client.handler.ServerPacketListenerWatcher
 import kotlin.coroutines.resume
@@ -147,6 +148,10 @@ class SessionClientImpl : SessionClient {
             tcpClient.disconnect()
             heartbeatJob.cancel()
         }
+    }
+
+    override fun getPacketListener(): ServerPacketListenerRegistry {
+        return packetHandler
     }
 
     private lateinit var lastPreferences: List<Long>

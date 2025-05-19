@@ -1,33 +1,33 @@
 package data.usecase
 
-import data.model.response.ProfileInfo
+import data.model.response.UserStateEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import ru.kotlix.frame.gateway.client.GatewayProfileClient
+import ru.kotlix.frame.gateway.client.GatewayUserStateClient
 
-class GetMyProfileInfo(
-    private val api: GatewayProfileClient
+class GetUserStateUseCase(
+    private val api: GatewayUserStateClient
 ) {
     val logger = LoggerFactory.getLogger(this::class.java)
     fun execute(
         token: String,
-        callback: (data: ProfileInfo?, error: String?) -> Unit
+        userId: Long,
+        callback: (userState: UserStateEntity?, error: String?) -> Unit
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = api.getMyProfileInfo(token)
+                val response = api.getUserStatus(token, userId)
 
                 if (response.isSuccessful) {
                     val resp = response.body()!!
-                    val result =
-                        ProfileInfo(
-                            resp.id,
-                            resp.login,
-                            resp.username,
-                            resp.email
-                        )
+                    val result = UserStateEntity(
+                        resp.userId,
+                        resp.online,
+                        resp.lastActive
+                    )
                     callback(result, null)
                 } else {
                     callback(null, "Error ${response.code()}: ${response.message()}")

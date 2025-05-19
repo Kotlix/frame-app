@@ -5,7 +5,9 @@ import data.model.request.CreateChatRequest
 import data.model.request.CreateDirectoryRequest
 import data.model.request.SendMessageRequest
 import data.model.response.ChatDto
+import data.model.response.MemberEntity
 import data.model.response.ProfileInfo
+import data.model.response.UserStateEntity
 import data.usecase.*
 import dto.*
 import kotlinx.coroutines.CoroutineScope
@@ -31,7 +33,10 @@ class HomeViewModel(
     private val updateChatUseCase: UpdateChatUseCase,
     private val getAllDirectoriesUseCase: GetAllDirectoriesUseCase,
     private val getAllVoicesUseCase: GetAllVoicesUseCase,
-    private val getMyProfileInfo: GetMyProfileInfo
+    private val getMyProfileInfo: GetMyProfileInfo,
+    private val getProfileInfoUseCase: GetProfileInfoUseCase,
+    private val getMembersUseCase: GetMembersUseCase,
+    private val getUserStateUseCase: GetUserStateUseCase
 ) {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -72,6 +77,15 @@ class HomeViewModel(
         private set
 
     var profile = mutableStateOf<ProfileInfo?>(null)
+        private set
+
+    var members = mutableStateOf<List<Long>>(listOf())
+        private set
+
+    var membersState = mutableStateOf<List<UserStateEntity>>(listOf())
+        private set
+
+    var idUserNameMap = mutableStateOf<Map<Long, String?>>(mapOf())
         private set
 
     // присоединиться/покинуть сообщество
@@ -313,16 +327,58 @@ class HomeViewModel(
         }
     }
 
-    fun getUserNameMap(chatId: Long, page: Long = 0, size: Long = 50, callback: () -> Unit) {
-        getAllMessagesUseCase.execute(
+    fun getMembersState(callback: () -> Unit) {
+        val userIds = members.value.filter { it != profile.value?.id }.distinct()
+        for (id in userIds) {
+            getUserStateUseCase.execute(
+                token = getToken(),  //// INSERT!!!!!!!!!!!!
+                userId = id
+            ) { data, error ->
+                viewModelScope.launch(Dispatchers.Default) {
+                    if (data != null) {
+                        membersState.value += data
+                        errorMessage.value = null
+                    } else {
+                        errorMessage.value = error
+                    }
+                    errorMessage.value = error
+                    callback()
+                }
+            }
+        }
+    }
+
+    fun getUserNameMap(callback: () -> Unit) {
+        val userIds = members.value.filter { it != profile.value?.id }.distinct()
+        for (id in userIds) {
+            getProfileInfoUseCase.execute(
+                token = getToken(),  //// INSERT!!!!!!!!!!!!
+                userId = id
+            ) { data, error ->
+                viewModelScope.launch(Dispatchers.Default) {
+                    if (data != null) {
+                        idUserNameMap.value = idUserNameMap.value.toMutableMap().apply {
+                            this[id] = data
+                        }
+                        errorMessage.value = null
+                    } else {
+                        errorMessage.value = error
+                    }
+                    errorMessage.value = error
+                    callback()
+                }
+            }
+        }
+    }
+
+    fun getMembers(communityId: Long, callback: () -> Unit) {
+        getMembersUseCase.execute(
             token = getToken(),  //// INSERT!!!!!!!!!!!!
-            chatId = chatId,
-            page = page,
-            size = size
+            communityId = communityId
         ) { data, error ->
             viewModelScope.launch(Dispatchers.Default) {
                 if (data != null) {
-                    messages.value = data
+                    members.value = data
                     errorMessage.value = null
                 } else {
                     errorMessage.value = error

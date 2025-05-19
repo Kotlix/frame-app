@@ -21,6 +21,8 @@ import org.koin.core.context.startKoin
 import org.koin.mp.KoinPlatform
 import presentation.viewmodel.HomeViewModel
 import session.SessionManager
+import session.client.handler.ServerPacketFilter
+import session.client.handler.ServerPacketListenerWatcher
 
 class HomeView {
     @Composable
@@ -283,9 +285,14 @@ class HomeView {
         val messages by viewModel.messages
         val directories by viewModel.directories
         val myProfile by viewModel.profile
+        val members by viewModel.members
+        val membersState by viewModel.membersState
+        val idUserNameMap by viewModel.idUserNameMap
         val error by viewModel.errorMessage
 
         val messageText = remember { mutableStateOf("") }
+
+        var toggleNotification by remember { mutableStateOf<Boolean>(false) }
 
         LaunchedEffect(selectedCommunityId) {
             try {
@@ -295,6 +302,9 @@ class HomeView {
                 viewModel.getAllDirectories(selectedCommunityId!!.toLong(), {})
                 viewModel.getAllChats(selectedCommunityId!!.toLong(), {})
                 viewModel.getAllVoices(selectedCommunityId!!.toLong(), {})
+                viewModel.getMembers(selectedCommunityId!!.toLong()) {
+                    viewModel.getUserNameMap {  }
+                }
 
             } catch (e: Exception) {
                 println("LaunchedEffect: Error while calling fetchCommunities: ${e.message}")
@@ -305,7 +315,25 @@ class HomeView {
             println(messages.toString())
 
             selectedChatId?.let {
-                viewModel.getAllMessages(selectedChatId!!.toLong(), callback = {})
+                viewModel.getAllMessages(selectedChatId!!.toLong(), callback = { })
+                SessionManager.sessionClient.getPacketListener().register(ServerPacketFilter { it.hasMessageNotify() },
+                    ServerPacketListenerWatcher.Once) {
+                    println("INVEEERT 11111")
+
+                    toggleNotification = !toggleNotification
+                }
+            }
+        }
+
+        LaunchedEffect(toggleNotification) {
+            println(messages.toString())
+
+            selectedChatId?.let {
+                viewModel.getAllMessages(selectedChatId!!.toLong(), callback = { })
+                SessionManager.sessionClient.getPacketListener().register(ServerPacketFilter { it.hasMessageNotify() },
+                    ServerPacketListenerWatcher.Once) {
+                    toggleNotification = !toggleNotification
+                }
             }
         }
 
@@ -478,7 +506,16 @@ class HomeView {
                                         .padding(4.dp),
                                     contentAlignment = if (message.authorId == myProfile?.id) Alignment.CenterEnd else Alignment.CenterStart
                                 ) {
-                                    MessageBubble(sender = "", message = message.message)
+                                    if (message.authorId == myProfile?.id) {
+                                        MessageBubble(sender = "You", message = message.message)
+                                    } else if (!idUserNameMap.containsKey(message.authorId)) {
+                                        MessageBubble(sender = "Unknown", message = message.message)
+                                    } else {
+                                        MessageBubble(
+                                            sender = idUserNameMap[message.authorId] ?: "Unknown",
+                                            message = message.message
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -513,13 +550,13 @@ class HomeView {
                                                 messageText.value
                                             ),
                                             {
-                                                viewModel.getAllMessages(chatId = selectedChatId!!.toLong(),
-                                                    page = 0,
-                                                    size = 50,
-                                                    {
-
-                                                    }
-                                                )
+//                                                viewModel.getAllMessages(chatId = selectedChatId!!.toLong(),
+//                                                    page = 0,
+//                                                    size = 50,
+//                                                    {
+//
+//                                                    }
+//                                                )
                                             }
                                         )
                                         messageText.value = ""
@@ -553,15 +590,24 @@ class HomeView {
             ) {
                 Text("users", modifier = Modifier.padding(bottom = 4.dp))
                 Text("online", modifier = Modifier.padding(vertical = 2.dp))
-                UserTag("onar", highlight = true)
-                UserTag("vova")
+                for (userId in members.filter { it != myProfile?.id }.filter {
+                    membersState.find { a -> a.userId == it }?.online ?: false
+                }
+                ) {
+                    UserTag(idUserNameMap[userId] ?: "Unknown Name")
+                }
                 Text("offline", modifier = Modifier.padding(top = 8.dp, bottom = 2.dp))
-                UserTag("sasha", highlight = true)
+                for (userId in members.filter { it != myProfile?.id }.filter {
+                    val pred = membersState.find { a -> a.userId == it }?.online ?: false
+                    !pred
+                }) {
+                    UserTag(idUserNameMap[userId] ?: "Unknown Name")
+                }
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
-                Spacer(modifier = Modifier.height(8.dp))
-                RemovableUser("onar")
-                RemovableUser("admin")
+                //Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
+//                Spacer(modifier = Modifier.height(8.dp))
+//                RemovableUser("onar")
+//                RemovableUser("admin")
             }
         }
     }
@@ -569,11 +615,23 @@ class HomeView {
     @Composable
     fun MessageBubble(sender: String, message: String) {
         Column(modifier = Modifier.padding(vertical = 4.dp)) {
-            Text(sender, modifier = Modifier.background(Color(0xFFFFFF88)).padding(horizontal = 6.dp))
-            Text(message, modifier = Modifier
-                .padding(start = 16.dp)
-                .background(Color.LightGray)
-                .padding(6.dp))
+            if (sender != "You") {
+                Text(sender, modifier = Modifier.background(Color(0xFFFFFF00)).padding(horizontal = 6.dp))
+                Text(
+                    message, modifier = Modifier
+                        .padding(start = 16.dp)
+                        .background(Color.LightGray)
+                        .padding(6.dp)
+                )
+            } else {
+                Text(sender, modifier = Modifier.background(Color(0xFFFFFF00)).padding(horizontal = 6.dp))
+                Text(
+                    message, modifier = Modifier
+                        .padding(start = 16.dp)
+                        .background(Color.Blue)
+                        .padding(6.dp)
+                )
+            }
         }
     }
 
