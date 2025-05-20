@@ -25,6 +25,7 @@ class HomeViewModel(
     private val leaveCommunityUseCase: LeaveCommunityUseCase,
     private val createCommunityUseCase: CreateCommunityUseCase,
     private val createChatUseCase: CreateChatUseCase,
+    private val createVoiceUseCase: CreateVoiceUseCase,
     private val createDirectoryUseCase: CreateDirectoryUseCase,
     private val deleteChatUseCase: DeleteChatUseCase,
     private val getAllChatsUseCase: GetAllChatsUseCase,
@@ -191,12 +192,29 @@ class HomeViewModel(
     }
 
 
-    fun createChat(communityId: Long, chat: CreateChatRequest, callback: () -> Unit) {
+    fun createChat(communityId: Long, name: String, directoryId: Long, order: Int = 0, callback: () -> Unit) {
         createChatUseCase.execute(
             token = getToken(),  //// INSERT!!!!!!!!!!!!
             communityId = communityId,
-            chat = chat
-        ) { error ->
+            name = name,
+            directoryId = directoryId,
+            order = order
+        ) { data, error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                errorMessage.value = error
+                callback()
+            }
+        }
+    }
+
+    fun createVoice(communityId: Long, name: String, directoryId: Long, order: Int = 0, callback: () -> Unit) {
+        createVoiceUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            communityId = communityId,
+            name = name,
+            directoryId = directoryId,
+            order = order
+        ) { data, error ->
             viewModelScope.launch(Dispatchers.Default) {
                 errorMessage.value = error
                 callback()
@@ -234,11 +252,13 @@ class HomeViewModel(
         }
     }
 
-    fun createDirectory(communityId: Long, directory: CreateDirectoryRequest, callback: () -> Unit) {
+    fun createDirectory(communityId: Long, name: String, directoryId: Long?, order: Int = 0, callback: () -> Unit) {
         createDirectoryUseCase.execute(
             token = getToken(),  //// INSERT!!!!!!!!!!!!
             communityId = communityId,
-            directory = directory
+            name = name,
+            directoryId = directoryId,
+            order = order
         ) { error ->
             viewModelScope.launch(Dispatchers.Default) {
                 errorMessage.value = error

@@ -13,9 +13,9 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.rememberWindowState
 import presentation.viewmodel.HomeViewModel
 
-class CreateDirectoryPopup {
+class CreateVoicePopup {
     @Composable
-    fun CreateDirectoryPopup(viewModel: HomeViewModel, workingDirectory: Long?, onClose: () -> Unit) {
+    fun CreateVoicePopup(viewModel: HomeViewModel, workingDirectory: Long, onClose: () -> Unit) {
         var name by remember { mutableStateOf("") }
         var communityId by viewModel.selectedCommunityId
         var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -29,7 +29,7 @@ class CreateDirectoryPopup {
             state = rememberWindowState().apply {
                 placement = WindowPlacement.Floating
             },
-            title = "Create Directory"
+            title = "Create Voice"
         ) {
             MaterialTheme {
                 Surface(
@@ -44,7 +44,7 @@ class CreateDirectoryPopup {
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            "Create Directory",
+                            "Create Voice",
                             style = MaterialTheme.typography.h4,
                             modifier = Modifier.padding(bottom = 24.dp)
                         )
@@ -56,7 +56,7 @@ class CreateDirectoryPopup {
                             TextField(
                                 value = name,
                                 onValueChange = { name = it },
-                                label = { Text("Directory Name") },
+                                label = { Text("Voice Name") },
                                 modifier = Modifier.fillMaxWidth()
                             )
 
@@ -91,7 +91,7 @@ class CreateDirectoryPopup {
                                     } else {
                                         errorMessage = null
                                         isLoading = true
-                                        viewModel.createDirectory(communityId!!.toLong(), name, workingDirectory) {
+                                        viewModel.createVoice(communityId!!.toLong(), name, workingDirectory) {
                                             isLoading = false
                                             if (error == null) {
                                                 println("Closing...")

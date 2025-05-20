@@ -11,6 +11,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.dsl.module
 import presentation.viewmodel.HomeViewModel
+import presentation.viewmodel.ProfileViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
@@ -186,10 +187,42 @@ val homeModule = module {
         GetUserStateUseCase(get())
     }
 
+    single {
+        ChangeProfileEmailUseCase(get())
+    }
+
+    single {
+        ChangeProfileEmailApplyUseCase(get())
+    }
+
+    single {
+        ChangeProfileUsernameApplyUseCase(get())
+    }
+
+    single {
+        ChangeProfileUserNameUseCase(get())
+    }
+
+    single {
+        ChangeProfilePasswordUseCase(get())
+    }
+
+    single {
+        ChangeProfilePasswordApplyUseCase(get())
+    }
+
+    single {
+        CreateVoiceUseCase(get())
+    }
+
     // ViewModel
     single {
         HomeViewModel(get(), get(), get(), get(), get(), get(), get(),
             get(), get(), get(), get(), get(), get(), get(), get(), get(),
-            get(), get(), get())
+            get(), get(), get(), get())
+    }
+
+    single {
+        ProfileViewModel(get(), get(), get(), get(), get(), get(), get())
     }
 }

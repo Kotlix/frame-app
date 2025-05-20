@@ -20,6 +20,7 @@ import di.homeModule
 import org.koin.core.context.startKoin
 import org.koin.mp.KoinPlatform
 import presentation.viewmodel.HomeViewModel
+import presentation.viewmodel.ProfileViewModel
 import session.SessionManager
 import session.client.handler.ServerPacketFilter
 import session.client.handler.ServerPacketListenerWatcher
@@ -285,6 +286,7 @@ class HomeView {
 
         val communities by viewModel.communities
         val chats by viewModel.chats
+        val voices by viewModel.voices
         val messages by viewModel.messages
         val directories by viewModel.directories
         val myProfile by viewModel.profile
@@ -297,6 +299,12 @@ class HomeView {
 
         var toggleNotification by remember { mutableStateOf<Boolean>(false) }
         var kafkaId by remember { mutableStateOf<Long>(0) }
+
+        var showCreateDirectoryPopup by remember { mutableStateOf(false) }
+        var showCreateChatPopup by remember { mutableStateOf(false) }
+        var showCreateVoicePopup by remember { mutableStateOf(false) }
+
+        var selectedDirectoryId by remember { mutableStateOf<Long?>(null) }
 
         LaunchedEffect(selectedCommunityId) {
             try {
@@ -329,6 +337,35 @@ class HomeView {
                     ServerPacketListenerWatcher.Once
                 ) {
                     toggleNotification = !toggleNotification
+                }
+            }
+        }
+
+        if (showCreateDirectoryPopup) {
+            CreateDirectoryPopup().CreateDirectoryPopup(viewModel, selectedDirectoryId) {
+                showCreateDirectoryPopup = false
+                viewModel.getAllDirectories(selectedCommunityId!!.toLong(), {})
+                viewModel.getAllChats(selectedCommunityId!!.toLong(), {})
+                viewModel.getAllVoices(selectedCommunityId!!.toLong(), {})
+            }
+        }
+
+        if (showCreateChatPopup) {
+            val dirId = selectedDirectoryId
+            dirId?.let {
+                CreateChatPopup().CreateChatPopup(viewModel, dirId) {
+                    showCreateChatPopup = false
+                    viewModel.getAllChats(selectedCommunityId!!.toLong(), {})
+                }
+            }
+        }
+
+        if (showCreateVoicePopup) {
+            val dirId = selectedDirectoryId
+            dirId?.let {
+                CreateVoicePopup().CreateVoicePopup(viewModel, dirId) {
+                    showCreateVoicePopup = false
+                    viewModel.getAllVoices(selectedCommunityId!!.toLong(), {})
                 }
             }
         }
@@ -464,7 +501,10 @@ class HomeView {
                                         }
 
                                         Spacer(modifier = Modifier.height(4.dp))
-                                        Button(onClick = {}, modifier = Modifier.width(40.dp)) { Text("+") }
+                                        Button(onClick = {
+                                            selectedDirectoryId = dir.id
+                                            showCreateChatPopup = true
+                                        }, modifier = Modifier.width(40.dp)) { Text("+") }
 
                                         Text("voices", modifier = Modifier
                                             .background(Color(0xFFDEEFFF))
@@ -472,7 +512,7 @@ class HomeView {
                                             .clickable { }
                                         )
 
-                                        val filteredVoiceChats = chats.filter { it.directoryId == dir.id }
+                                        val filteredVoiceChats = voices.filter { it.directoryId == dir.id }
                                         filteredVoiceChats.forEach { chat ->
                                             Text(
                                                 "🎙 ${chat.name}",
@@ -485,19 +525,30 @@ class HomeView {
                                         }
 
                                         Spacer(modifier = Modifier.height(4.dp))
-                                        Button(onClick = {}, modifier = Modifier.width(40.dp)) { Text("+") }
+                                        Button(onClick = {
+                                            selectedDirectoryId = dir.id
+                                            showCreateVoicePopup = true
+                                        }, modifier = Modifier.width(40.dp)) { Text("+") }
                                     }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Button(onClick = {
+                                        selectedDirectoryId = dir.id
+                                        showCreateDirectoryPopup = true
+                                    }, modifier = Modifier.fillMaxWidth()) { Text("+") }
                                 }
                             }
 //                        Text("📁 root", modifier = Modifier.background(Color(0xFFDEEFFF)).padding(4.dp))
 //                        Text("💬 chat", modifier = Modifier.background(Color(0xFFA6E3A1)).padding(4.dp))
 //                        Text("🎙 voice", modifier = Modifier.background(Color(0xFFB4D3F2)).padding(4.dp))
-                            item {
-                                Column {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
-                                }
-                            }
+//                            item {
+//                                Column {
+//                                    Spacer(modifier = Modifier.height(4.dp))
+//                                    Button(onClick = {
+//                                        selectedDirectoryId = null,
+//                                        showCreateDirectoryPopup = true
+//                                    }, modifier = Modifier.fillMaxWidth()) { Text("+") }
+//                                }
+//                            }
                         }
 
                         Spacer(modifier = Modifier.width(4.dp))
@@ -563,7 +614,7 @@ class HomeView {
                                             viewModel.sendMessage(
                                                 selectedChatId!!.toLong(),
                                                 SendMessageRequest(
-                                                    messageText.value
+                                                    messageText.value.trim()
                                                 ),
                                                 {
 //                                                viewModel.getAllMessages(chatId = selectedChatId!!.toLong(),
@@ -681,27 +732,39 @@ class HomeView {
         viewModel: HomeViewModel
     ) {
         var showCommunityScreen by remember { mutableStateOf(false) }
+        var showProfilePopup by remember { mutableStateOf(false) }
 
         val onCommunityClick: () -> Unit = {
             showCommunityScreen = true
         }
 
         if (showCommunityScreen) {
-            HomeView().CommunityScreen(KoinPlatform.getKoin().get<HomeViewModel>(),
-                onSearchClick = { showCommunityScreen = false },
-                onProfileClick = { println("Navigate to Profile") }
+            HomeView().CommunityScreen(viewModel,
+                onSearchClick = {
+                    showCommunityScreen = true
+                    showProfilePopup = false
+                                },
+                onProfileClick = {
+                    showCommunityScreen = false
+                    showProfilePopup = true
+                }
             )
 
+        } else if(showProfilePopup) {
+            ProfilePopup().ProfilePopup(KoinPlatform.getKoin().get<ProfileViewModel>()) {
+                showProfilePopup = false
+            }
         } else {
-            HomeView().HomeScreen(
-                viewModel,
-                onSearchClick = { println("Navigate to Home/Search") },
-                onCommunityClick = onCommunityClick,
-                onProfileClick = { println("Navigate to Profile") }
-            )
+                HomeView().HomeScreen(
+                    viewModel,
+                    onSearchClick = { println("Navigate to Home/Search") },
+                    onCommunityClick = onCommunityClick,
+                    onProfileClick = {
+                        showProfilePopup = true
+                    }
+                )
+            }
         }
-
-    }
 
 
     fun launchHome() = application {

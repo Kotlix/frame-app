@@ -1,21 +1,27 @@
 package presentation.view
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.rememberWindowState
 import presentation.viewmodel.HomeViewModel
 
-class CreateDirectoryPopup {
+class CreateChatPopup {
     @Composable
-    fun CreateDirectoryPopup(viewModel: HomeViewModel, workingDirectory: Long?, onClose: () -> Unit) {
+    fun CreateChatPopup(viewModel: HomeViewModel, workingDirectory: Long, onClose: () -> Unit) {
         var name by remember { mutableStateOf("") }
         var communityId by viewModel.selectedCommunityId
         var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -29,7 +35,7 @@ class CreateDirectoryPopup {
             state = rememberWindowState().apply {
                 placement = WindowPlacement.Floating
             },
-            title = "Create Directory"
+            title = "Create Chat"
         ) {
             MaterialTheme {
                 Surface(
@@ -44,7 +50,7 @@ class CreateDirectoryPopup {
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            "Create Directory",
+                            "Create Chat",
                             style = MaterialTheme.typography.h4,
                             modifier = Modifier.padding(bottom = 24.dp)
                         )
@@ -56,7 +62,7 @@ class CreateDirectoryPopup {
                             TextField(
                                 value = name,
                                 onValueChange = { name = it },
-                                label = { Text("Directory Name") },
+                                label = { Text("Chat Name") },
                                 modifier = Modifier.fillMaxWidth()
                             )
 
@@ -91,7 +97,7 @@ class CreateDirectoryPopup {
                                     } else {
                                         errorMessage = null
                                         isLoading = true
-                                        viewModel.createDirectory(communityId!!.toLong(), name, workingDirectory) {
+                                        viewModel.createChat(communityId!!.toLong(), name, workingDirectory) {
                                             isLoading = false
                                             if (error == null) {
                                                 println("Closing...")

@@ -6,27 +6,38 @@ import data.model.response.ChatDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import ru.kotlix.frame.gateway.api.dto.entities.GatewayChatDto
+import ru.kotlix.frame.gateway.api.dto.requests.GatewayCreateChatRequest
+import ru.kotlix.frame.gateway.client.GatewayChatClient
 
 class CreateChatUseCase(
-    val api: ChatApi
+    val api: GatewayChatClient
 ) {
     fun execute(
         token: String,
         communityId: Long,
-        chat: CreateChatRequest,
-        callback: (error: String?) -> Unit
+        name: String,
+        directoryId: Long,
+        order: Int,
+        callback: (data: GatewayChatDto?, error: String?) -> Unit
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = api.createChat(communityId, chat, token)
+                val response = api.createChat(token, communityId, GatewayCreateChatRequest(
+                        name,
+                        directoryId,
+                        order
+                    )
+                )
 
                 if (response.isSuccessful) {
-                    callback(null)
+                    val resp = response.body()
+                    callback(resp, null)
                 } else {
-                    callback("Error ${response.code()}: ${response.message()}")
+                    callback(null, "Error ${response.code()}: ${response.message()}")
                 }
             } catch (e: Exception) {
-                callback("Exception: ${e.message}")
+                callback(null, "Exception: ${e.message}")
             }
         }
     }
