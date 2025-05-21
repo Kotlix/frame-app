@@ -21,6 +21,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":auth"))
     implementation(project(":home"))
+    implementation(project(":voice"))
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")

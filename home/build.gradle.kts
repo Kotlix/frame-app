@@ -37,6 +37,7 @@ dependencies {
 
 
     implementation(project(":core"))
+    implementation(project(":voice"))
 }
 
 compose.desktop {

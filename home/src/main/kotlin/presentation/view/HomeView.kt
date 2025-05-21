@@ -28,6 +28,7 @@ import org.koin.core.context.startKoin
 import org.koin.mp.KoinPlatform
 import presentation.viewmodel.HomeViewModel
 import presentation.viewmodel.ProfileViewModel
+import presentation.viewmodel.VoiceViewModel
 import session.SessionManager
 import session.client.handler.ServerPacketFilter
 import session.client.handler.ServerPacketListenerWatcher
@@ -315,6 +316,9 @@ class HomeView {
         var showUpdateChatPopup by remember { mutableStateOf(false) }
         var showUpdateVoicePopup by remember { mutableStateOf(false) }
 
+        var showVoiceChat by remember { mutableStateOf(false) }
+        var selectedVoiceId by remember { mutableStateOf<Long>(0L) }
+
         var selectedDirectoryId by remember { mutableStateOf<Long?>(null) }
 
         var selectedForUpdateDirectory by remember { mutableStateOf<DirectoryEntity?>(null) }
@@ -428,6 +432,19 @@ class HomeView {
             }
         }
 
+        if (showVoiceChat) {
+            val v = selectedVoiceId
+            v?.let {
+                Window(onCloseRequest = { showVoiceChat = false }, title = "Frame") {
+                    MaterialTheme {
+                        VoiceView().VoiceView(KoinPlatform.getKoin().get<VoiceViewModel>(), v) {
+                            showVoiceChat = false
+                        }
+                    }
+                }
+            }
+        }
+
         Column(modifier = Modifier.fillMaxSize().padding(4.dp)) {
 
             Row(modifier = Modifier.fillMaxWidth(),
@@ -536,6 +553,10 @@ class HomeView {
                                     hiddenDirectories = hiddenDirectories,
                                     onSelectChat = { chat ->
                                         selectedChatId = chat.id.toString()
+                                    },
+                                    onJoinVoice = { voice ->
+                                        selectedVoiceId = voice.id
+                                        showVoiceChat = true
                                     },
                                     onEditChat = { chat ->
                                         selectedForUpdateChat = chat
@@ -737,6 +758,8 @@ class HomeView {
         // callbacks
         onSelectChat: (ChatEntity) -> Unit,
 
+        onJoinVoice: (VoiceEntity) -> Unit,
+
         onEditChat: (ChatEntity) -> Unit,
         onDeleteChat: (Long) -> Unit,
         onCreateChatInDirectory: (Long) -> Unit,
@@ -840,6 +863,7 @@ class HomeView {
                     allDirectories = allDirectories,
                     hiddenDirectories = hiddenDirectories,
                     onSelectChat = onSelectChat,
+                    onJoinVoice = onJoinVoice,
                     onEditChat = onEditChat,
                     onDeleteChat = onDeleteChat,
                     onCreateChatInDirectory = onCreateChatInDirectory,
@@ -970,7 +994,9 @@ class HomeView {
                         color = Color.DarkGray,
                         modifier = Modifier
                             .weight(1f)
-                            .clickable { /* TODO */ }
+                            .clickable {
+                                onJoinVoice(voice)
+                            }
                     )
                     Row {
                         IconButton(onClick = {
@@ -1114,10 +1140,10 @@ class HomeView {
     }
 }
 
-fun main () {
-    startKoin {
-        modules(homeModule)
-    }
-    HomeView().launchHome()
- }
+//fun main () {
+//    startKoin {
+//        modules(homeModule)
+//    }
+//    HomeView().launchHome()
+// }
 
