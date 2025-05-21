@@ -69,7 +69,7 @@ class UpdateVoicePopup {
                             TextField(
                                 value = newVoiceName,
                                 onValueChange = { newVoiceName = it },
-                                label = { Text("New Chat Name") },
+                                label = { Text("New Voice Name") },
                                 modifier = Modifier.fillMaxWidth()
                             )
 

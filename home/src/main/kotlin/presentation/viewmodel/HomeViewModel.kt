@@ -529,7 +529,7 @@ class HomeViewModel(
         }
     }
 
-    fun updateDirectory(id: Long, name: String, directoryId: Long, order: Int = 0, callback: () -> Unit) {
+    fun updateDirectory(id: Long, name: String, directoryId: Long?, order: Int = 0, callback: () -> Unit) {
         updateDirectoryUseCase.execute(
             token = getToken(),  //// INSERT!!!!!!!!!!!!
             id = id,

@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
@@ -320,6 +321,17 @@ class HomeView {
         var selectedForUpdateChat by remember { mutableStateOf<ChatEntity?>(null) }
         var selectedForUpdateVoice by remember { mutableStateOf<VoiceEntity?>(null) }
 
+        var hiddenDirectories by remember { mutableStateOf<Map<Long, Boolean>>(mapOf()) }
+
+        LaunchedEffect(directories) {
+            val updated = mutableMapOf<Long, Boolean>()
+            directories.forEach {
+                updated[it.id] = false
+            }
+            hiddenDirectories = updated
+        }
+
+
         LaunchedEffect(selectedCommunityId) {
             try {
                 viewModel.fetchCommunities()
@@ -399,6 +411,18 @@ class HomeView {
             voice?.let {
                 UpdateVoicePopup().UpdateVoicePopup(viewModel, voice) {
                     showUpdateVoicePopup = false
+                    viewModel.getAllVoices(selectedCommunityId!!.toLong(), {})
+                }
+            }
+        }
+
+        if (showUpdateDirectoryPopup) {
+            val dir = selectedForUpdateDirectory
+            dir?.let {
+                UpdateDirectoryPopup().UpdateDirectoryPopup(viewModel, dir) {
+                    showUpdateDirectoryPopup = false
+                    viewModel.getAllDirectories(selectedCommunityId!!.toLong(), {})
+                    viewModel.getAllChats(selectedCommunityId!!.toLong(), {})
                     viewModel.getAllVoices(selectedCommunityId!!.toLong(), {})
                 }
             }
@@ -490,7 +514,7 @@ class HomeView {
                                 .background(Color(0xFFA6E3A1))
                                 .padding(4.dp)
                         ) {
-                            Text("chat")
+                            Text((if (selectedChatId.isNullOrBlank()) "Select a chat" else chats.find { it.id.toString() == selectedChatId }?.name) ?: "chats")
                         }
                     }
 
@@ -503,138 +527,61 @@ class HomeView {
                                 .border(1.dp, Color.Gray)
                                 .padding(4.dp)
                         ) {
-                            directories.forEach { dir ->
-                                item {
-                                    Column {
-                                        Text("📁 ${dir.name}", modifier = Modifier
-                                            .background(Color(0xFFDEEFFF))
-                                            .padding(4.dp)
-                                            .clickable { }
-                                        )
-
-                                        Text("chats", modifier = Modifier
-                                            .background(Color(0xFFDEEFFF))
-                                            .padding(start = 10.dp, top = 4.dp, bottom = 4.dp)
-                                            .clickable { }
-                                        )
-
-                                        val filteredChats = chats.filter { it.directoryId == dir.id }
-                                        filteredChats.forEach { chat ->
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(start = 16.dp, top = 2.dp, bottom = 2.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Text(
-                                                    text = "💬 ${chat.name}",
-                                                    color = Color.DarkGray,
-                                                    modifier = Modifier
-                                                        .weight(1f)
-                                                        .clickable {
-                                                            selectedChatId = chat.id.toString()
-                                                            println("💬 $selectedChatId")
-                                                        }
-                                                )
-
-                                                Row {
-                                                    IconButton(onClick = {
-                                                        selectedForUpdateChat = chat
-                                                        showUpdateChatPopup = true
-                                                    }) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Edit,
-                                                            contentDescription = "Edit",
-                                                            tint = Color.Gray
-                                                        )
-                                                    }
-
-                                                    IconButton(onClick = {
-                                                        viewModel.deleteChat(chat.id) {
-                                                            viewModel.getAllChats(selectedCommunityId!!.toLong(), { })
-                                                        }
-                                                    }) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Delete,
-                                                            contentDescription = "Delete",
-                                                            tint = Color.Red
-                                                        )
-                                                    }
-                                                }
-                                            }
+                            items(directories.filter { it.directoryId == 0L }) { rootDir ->
+                                DirectoryItem(
+                                    dir = rootDir,
+                                    chats = chats,
+                                    voices = voices,
+                                    allDirectories = directories,
+                                    hiddenDirectories = hiddenDirectories,
+                                    onSelectChat = { chat ->
+                                        selectedChatId = chat.id.toString()
+                                    },
+                                    onEditChat = { chat ->
+                                        selectedForUpdateChat = chat
+                                        showUpdateChatPopup = true
+                                    },
+                                    onDeleteChat = { chatId ->
+                                        viewModel.deleteChat(chatId) {
+                                            viewModel.getAllChats(selectedCommunityId!!.toLong()) {}
                                         }
-
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Button(onClick = {
-                                            selectedDirectoryId = dir.id
-                                            showCreateChatPopup = true
-                                        }, modifier = Modifier.width(40.dp)) { Text("+") }
-
-                                        Text("voices", modifier = Modifier
-                                            .background(Color(0xFFDEEFFF))
-                                            .padding(start = 10.dp, top = 4.dp, bottom = 4.dp)
-                                            .clickable { }
-                                        )
-
-                                        val filteredVoiceChats = voices.filter { it.directoryId == dir.id }
-                                        filteredVoiceChats.forEach { voice ->
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(start = 16.dp, top = 2.dp, bottom = 2.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Text(
-                                                    text = "\uD83C\uDFA4 ${voice.name}",
-                                                    color = Color.DarkGray,
-                                                    modifier = Modifier
-                                                        .weight(1f)
-                                                        .clickable {
-                                                            // TODO(voice connection)
-                                                        }
-                                                )
-
-                                                Row {
-                                                    IconButton(onClick = {
-                                                        selectedForUpdateVoice = voice
-                                                        showUpdateVoicePopup = true
-                                                    }) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Edit,
-                                                            contentDescription = "Edit",
-                                                            tint = Color.Gray
-                                                        )
-                                                    }
-
-                                                    IconButton(onClick = {
-                                                        viewModel.deleteVoice(voice.id) {
-                                                            viewModel.getAllVoices(selectedCommunityId!!.toLong(), { })
-                                                        }
-                                                    }) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Delete,
-                                                            contentDescription = "Delete",
-                                                            tint = Color.Red
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                    },
+                                    onCreateChatInDirectory = { directoryId ->
+                                        selectedDirectoryId = directoryId
+                                        showCreateChatPopup = true
+                                    },
+                                    onEditVoice = { voice ->
+                                        selectedForUpdateVoice = voice
+                                        showUpdateVoicePopup = true
+                                    },
+                                    onDeleteVoice = { voiceId ->
+                                        viewModel.deleteVoice(voiceId) {
+                                            viewModel.getAllVoices(selectedCommunityId!!.toLong()) {}
                                         }
-
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Button(onClick = {
-                                            selectedDirectoryId = dir.id
-                                            showCreateVoicePopup = true
-                                        }, modifier = Modifier.width(40.dp)) { Text("+") }
-                                    }
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Button(onClick = {
-                                        selectedDirectoryId = dir.id
+                                    },
+                                    onCreateVoiceInDirectory = { directoryId ->
+                                        selectedDirectoryId = directoryId
+                                        showCreateVoicePopup = true
+                                    },
+                                    onCreateSubdirectory = { parentDirId ->
+                                        selectedDirectoryId = parentDirId
                                         showCreateDirectoryPopup = true
-                                    }, modifier = Modifier.fillMaxWidth()) { Text("+") }
-                                }
+                                    },
+                                    onEditDirectory = { dir ->
+                                        selectedForUpdateDirectory = dir
+                                        showUpdateDirectoryPopup = true
+                                    },
+                                    onDeleteDirectory = { directoryId ->
+                                        viewModel.deleteDirectory(directoryId) {
+                                            viewModel.getAllDirectories(selectedCommunityId!!.toLong()) {}
+                                        }
+                                    },
+                                    onSwitchDirectoryPresentation = { dirId ->
+                                        hiddenDirectories = hiddenDirectories.toMutableMap().apply {
+                                            this[dirId] = !(this[dirId] ?: false)
+                                        }
+                                    }
+                                )
                             }
 //                        Text("📁 root", modifier = Modifier.background(Color(0xFFDEEFFF)).padding(4.dp))
 //                        Text("💬 chat", modifier = Modifier.background(Color(0xFFA6E3A1)).padding(4.dp))
@@ -779,6 +726,285 @@ class HomeView {
         }
     }
 
+    @Composable
+    fun DirectoryItem(
+        dir: DirectoryEntity,
+        chats: List<ChatEntity>,
+        voices: List<VoiceEntity>,
+        allDirectories: List<DirectoryEntity>,
+        hiddenDirectories: Map<Long, Boolean>,
+
+        // callbacks
+        onSelectChat: (ChatEntity) -> Unit,
+
+        onEditChat: (ChatEntity) -> Unit,
+        onDeleteChat: (Long) -> Unit,
+        onCreateChatInDirectory: (Long) -> Unit,
+
+        onEditVoice: (VoiceEntity) -> Unit,
+        onDeleteVoice: (Long) -> Unit,
+        onCreateVoiceInDirectory: (Long) -> Unit,
+
+        onEditDirectory: (DirectoryEntity) -> Unit,
+        onDeleteDirectory: (Long) -> Unit,
+        onCreateSubdirectory: (Long) -> Unit,
+
+        onSwitchDirectoryPresentation: (Long) -> Unit,
+
+        level: Int = 0
+    ) {
+        val paddingStart = 16.dp * level
+        val filteredChats = chats.filter { it.directoryId == dir.id }
+        val filteredVoices = voices.filter { it.directoryId == dir.id }
+        val childDirectories = allDirectories.filter { it.directoryId == dir.id }
+
+        Column(modifier = Modifier.padding(start = paddingStart)) {
+            // 📁 Название директории
+            if (dir.name != "root") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFDEEFFF))
+                        .padding(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "📁 ${dir.name}",
+                        color = Color.Black,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onSwitchDirectoryPresentation(dir.id) }
+
+                    )
+
+                    Row {
+                        IconButton(
+                            onClick = { onCreateSubdirectory(dir.id) },
+                            modifier = Modifier.size(24.dp) // уменьшаем всю кнопку
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add new directory",
+                                tint = Color(0xFF1B5E20),
+                                modifier = Modifier.size(16.dp) // уменьшаем саму иконку
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { onEditDirectory(dir) },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit directory",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { onDeleteDirectory(dir.id) },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete directory",
+                                tint = Color.Red,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            } else {
+                Text(
+                    "📁 ${dir.name}",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFDEEFFF))
+                        .padding(4.dp)
+                        .clickable { onSwitchDirectoryPresentation(dir.id) }
+                )
+            }
+
+            if (hiddenDirectories.containsKey(dir.id) && hiddenDirectories[dir.id] == true) {
+                return
+            }
+
+            // 🔁 Рекурсивно выводим дочерние директории
+            childDirectories.forEach { childDir ->
+                DirectoryItem(
+                    dir = childDir,
+                    chats = chats,
+                    voices = voices,
+                    allDirectories = allDirectories,
+                    hiddenDirectories = hiddenDirectories,
+                    onSelectChat = onSelectChat,
+                    onEditChat = onEditChat,
+                    onDeleteChat = onDeleteChat,
+                    onCreateChatInDirectory = onCreateChatInDirectory,
+                    onEditVoice = onEditVoice,
+                    onDeleteVoice = onDeleteVoice,
+                    onCreateVoiceInDirectory = onCreateVoiceInDirectory,
+                    onCreateSubdirectory = onCreateSubdirectory,
+                    onDeleteDirectory = onDeleteDirectory,
+                    onEditDirectory = onEditDirectory,
+                    onSwitchDirectoryPresentation = onSwitchDirectoryPresentation,
+                    level = level + 1
+                )
+            }
+
+            // chats
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFDEEFFF))
+                    .padding(start = 10.dp, top = 4.dp, bottom = 4.dp)
+            ) {
+                Text(
+                    text = "chats",
+                    color = Color.Black,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { }
+                )
+
+                IconButton(
+                    onClick = { onCreateChatInDirectory(dir.id) },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add chat",
+                        tint = Color(0xFF1B5E20),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+
+
+            // 💬 Список чатов
+            filteredChats.forEach { chat ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "💬 ${chat.name}",
+                        color = Color.DarkGray,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                onSelectChat(chat)
+                            }
+                    )
+                    Row {
+                        IconButton(onClick = {
+                                onEditChat(chat)
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.Gray, modifier = Modifier.size(18.dp))
+                        }
+                        IconButton(onClick = {
+                                onDeleteChat(chat.id)
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+            }
+
+//            Button(onClick = {
+//                onCreateChatInDirectory(dir.id)
+//            }, modifier = Modifier.width(40.dp)) {
+//                Text("+")
+//            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFDEEFFF))
+                    .padding(start = 10.dp, top = 4.dp, bottom = 4.dp)
+            ) {
+                Text(
+                    text = "voices",
+                    color = Color.Black,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { }
+                )
+
+                IconButton(
+                    onClick = { onCreateVoiceInDirectory(dir.id) },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add voice",
+                        tint = Color(0xFF1B5E20),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            // 🎙️ Список голосовых чатов
+            filteredVoices.forEach { voice ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "\uD83C\uDFA4 ${voice.name}",
+                        color = Color.DarkGray,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { /* TODO */ }
+                    )
+                    Row {
+                        IconButton(onClick = {
+                                onEditVoice(voice)
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.Gray, modifier = Modifier.size(18.dp))
+                        }
+                        IconButton(onClick = {
+                                onDeleteVoice(voice.id)
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+            }
+
+//            Button(onClick = {
+//                onCreateVoiceInDirectory(dir.id)
+//            }, modifier = Modifier.width(40.dp)) {
+//                Text("+")
+//            }
+
+            // Кнопка добавления вложенной директории
+//            Button(onClick = {
+//                onCreateSubdirectory(dir.id)
+//            }, modifier = Modifier.fillMaxWidth()) {
+//                Text("+")
+//            }
+        }
+    }
 
 
     @Composable
