@@ -21,6 +21,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import di.voiceModule
 import org.koin.core.context.startKoin
+import org.koin.mp.KoinPlatform.getKoin
 import presentation.viewmodel.VoiceViewModel
 import java.awt.Window
 import kotlin.math.sin
@@ -71,6 +72,36 @@ class VoiceView {
     @Composable
     fun VoiceWaveAnimation(modifier: Modifier = Modifier) {
         val infiniteTransition = rememberInfiniteTransition(label = "wave")
+
+        // Плавно меняющиеся амплитуды для нескольких волн
+        val amplitude1 by infiniteTransition.animateFloat(
+            initialValue = 20f,
+            targetValue = 40f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2500, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "amplitude1"
+        )
+        val amplitude2 by infiniteTransition.animateFloat(
+            initialValue = 10f,
+            targetValue = 30f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2000, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "amplitude2"
+        )
+        val amplitude3 by infiniteTransition.animateFloat(
+            initialValue = 5f,
+            targetValue = 15f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(3000, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "amplitude3"
+        )
+
         val phase by infiniteTransition.animateFloat(
             initialValue = 0f,
             targetValue = 2 * Math.PI.toFloat(),
@@ -78,7 +109,7 @@ class VoiceView {
                 animation = tween(2000, easing = LinearEasing),
                 repeatMode = RepeatMode.Restart
             ),
-            label = "wavePhase"
+            label = "phase"
         )
 
         Canvas(modifier = modifier) {
@@ -86,13 +117,19 @@ class VoiceView {
             val height = size.height / 2
 
             val path = Path()
-            val amplitude = 40f
-            val frequency = 0.05f
-
             path.moveTo(0f, height)
 
+            val freq1 = 0.02f
+            val freq2 = 0.05f
+            val freq3 = 0.11f
+
             for (x in 0..width.toInt()) {
-                val y = height + sin((x * frequency) + phase) * amplitude
+                // Суммируем три синусоиды с разными частотами и амплитудами
+                val y = height +
+                        sin((x * freq1) + phase) * amplitude1 +
+                        sin((x * freq2) + phase * 1.5f) * amplitude2 +
+                        sin((x * freq3) + phase * 0.5f) * amplitude3
+
                 path.lineTo(x.toFloat(), y)
             }
 
@@ -104,4 +141,20 @@ class VoiceView {
         }
     }
 
+}
+
+
+fun main() = application {
+    // Запуск Koin
+    startKoin {
+        modules(voiceModule)
+    }
+
+    // Запуск окна
+    Window(onCloseRequest = ::exitApplication, title = "Voice View") {
+        val view = VoiceView()
+        view.VoiceView(getKoin().get<VoiceViewModel>(), -1L, onLeaveClick = {
+            println("Leave clicked!")
+        })
+    }
 }
