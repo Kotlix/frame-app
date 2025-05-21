@@ -6,7 +6,24 @@ import data.ChatApi
 import data.DirectoryApi
 import data.HomeApi
 import data.MessageApi
-import data.usecase.*
+import data.usecase.chat.CreateChatUseCase
+import data.usecase.chat.DeleteChatUseCase
+import data.usecase.chat.GetAllChatsUseCase
+import data.usecase.chat.UpdateChatUseCase
+import data.usecase.community.*
+import data.usecase.directory.CreateDirectoryUseCase
+import data.usecase.directory.DeleteDirectoryUseCase
+import data.usecase.directory.GetAllDirectoriesUseCase
+import data.usecase.directory.UpdateDirectoryUseCase
+import data.usecase.message.GetAllMessagesUseCase
+import data.usecase.message.SendMessageUseCase
+import data.usecase.profile.*
+import data.usecase.server.FetchVoiceServersUseCase
+import data.usecase.userstate.GetUserStateUseCase
+import data.usecase.voice.CreateVoiceUseCase
+import data.usecase.voice.DeleteVoiceUseCase
+import data.usecase.voice.GetAllVoicesUseCase
+import data.usecase.voice.UpdateVoiceUseCase
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.dsl.module
@@ -18,7 +35,6 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 import ru.kotlix.frame.gateway.client.*
 import utils.LocalDateTimeAdapter
 import java.time.LocalDateTime
-import java.util.concurrent.TimeUnit
 
 
 val homeModule = module {
@@ -144,11 +160,11 @@ val homeModule = module {
     }
 
     single {
-        DeleteChatUseCase()
+        DeleteChatUseCase(get())
     }
 
     single {
-        UpdateChatUseCase()
+        UpdateChatUseCase(get())
     }
 
     single {
@@ -215,11 +231,27 @@ val homeModule = module {
         CreateVoiceUseCase(get())
     }
 
+    single {
+        UpdateVoiceUseCase(get())
+    }
+
+    single {
+        UpdateDirectoryUseCase(get())
+    }
+
+    single {
+        DeleteDirectoryUseCase(get())
+    }
+
+    single {
+        DeleteVoiceUseCase(get())
+    }
+
     // ViewModel
     single {
         HomeViewModel(get(), get(), get(), get(), get(), get(), get(),
             get(), get(), get(), get(), get(), get(), get(), get(), get(),
-            get(), get(), get(), get())
+            get(), get(), get(), get(), get(), get(), get(), get())
     }
 
     single {

@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +20,9 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import data.model.request.SendMessageRequest
 import di.homeModule
+import dto.ChatEntity
+import dto.DirectoryEntity
+import dto.VoiceEntity
 import org.koin.core.context.startKoin
 import org.koin.mp.KoinPlatform
 import presentation.viewmodel.HomeViewModel
@@ -304,7 +310,15 @@ class HomeView {
         var showCreateChatPopup by remember { mutableStateOf(false) }
         var showCreateVoicePopup by remember { mutableStateOf(false) }
 
+        var showUpdateDirectoryPopup by remember { mutableStateOf(false) }
+        var showUpdateChatPopup by remember { mutableStateOf(false) }
+        var showUpdateVoicePopup by remember { mutableStateOf(false) }
+
         var selectedDirectoryId by remember { mutableStateOf<Long?>(null) }
+
+        var selectedForUpdateDirectory by remember { mutableStateOf<DirectoryEntity?>(null) }
+        var selectedForUpdateChat by remember { mutableStateOf<ChatEntity?>(null) }
+        var selectedForUpdateVoice by remember { mutableStateOf<VoiceEntity?>(null) }
 
         LaunchedEffect(selectedCommunityId) {
             try {
@@ -365,6 +379,26 @@ class HomeView {
             dirId?.let {
                 CreateVoicePopup().CreateVoicePopup(viewModel, dirId) {
                     showCreateVoicePopup = false
+                    viewModel.getAllVoices(selectedCommunityId!!.toLong(), {})
+                }
+            }
+        }
+
+        if (showUpdateChatPopup) {
+            val chat = selectedForUpdateChat
+            chat?.let {
+                UpdateChatPopup().UpdateChatPopup(viewModel, chat) {
+                    showUpdateChatPopup = false
+                    viewModel.getAllChats(selectedCommunityId!!.toLong(), {})
+                }
+            }
+        }
+
+        if (showUpdateVoicePopup) {
+            val voice = selectedForUpdateVoice
+            voice?.let {
+                UpdateVoicePopup().UpdateVoicePopup(viewModel, voice) {
+                    showUpdateVoicePopup = false
                     viewModel.getAllVoices(selectedCommunityId!!.toLong(), {})
                 }
             }
@@ -486,18 +520,49 @@ class HomeView {
 
                                         val filteredChats = chats.filter { it.directoryId == dir.id }
                                         filteredChats.forEach { chat ->
-                                            // println("💬 ${chat.name}")
-                                            Text(
-                                                "💬 ${chat.name}",
+                                            Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(start = 16.dp, top = 2.dp, bottom = 2.dp)
-                                                    .clickable {
-                                                        selectedChatId = chat.id.toString()
-                                                        println("💬 ${selectedChatId}")
-                                                    },
-                                                color = Color.DarkGray
-                                            )
+                                                    .padding(start = 16.dp, top = 2.dp, bottom = 2.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(
+                                                    text = "💬 ${chat.name}",
+                                                    color = Color.DarkGray,
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .clickable {
+                                                            selectedChatId = chat.id.toString()
+                                                            println("💬 $selectedChatId")
+                                                        }
+                                                )
+
+                                                Row {
+                                                    IconButton(onClick = {
+                                                        selectedForUpdateChat = chat
+                                                        showUpdateChatPopup = true
+                                                    }) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Edit,
+                                                            contentDescription = "Edit",
+                                                            tint = Color.Gray
+                                                        )
+                                                    }
+
+                                                    IconButton(onClick = {
+                                                        viewModel.deleteChat(chat.id) {
+                                                            viewModel.getAllChats(selectedCommunityId!!.toLong(), { })
+                                                        }
+                                                    }) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Delete,
+                                                            contentDescription = "Delete",
+                                                            tint = Color.Red
+                                                        )
+                                                    }
+                                                }
+                                            }
                                         }
 
                                         Spacer(modifier = Modifier.height(4.dp))
@@ -513,15 +578,49 @@ class HomeView {
                                         )
 
                                         val filteredVoiceChats = voices.filter { it.directoryId == dir.id }
-                                        filteredVoiceChats.forEach { chat ->
-                                            Text(
-                                                "🎙 ${chat.name}",
+                                        filteredVoiceChats.forEach { voice ->
+                                            Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(start = 16.dp, top = 2.dp, bottom = 2.dp)
-                                                    .clickable { /* onChatClick(chat.id) */ },
-                                                color = Color.DarkGray
-                                            )
+                                                    .padding(start = 16.dp, top = 2.dp, bottom = 2.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(
+                                                    text = "\uD83C\uDFA4 ${voice.name}",
+                                                    color = Color.DarkGray,
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .clickable {
+                                                            // TODO(voice connection)
+                                                        }
+                                                )
+
+                                                Row {
+                                                    IconButton(onClick = {
+                                                        selectedForUpdateVoice = voice
+                                                        showUpdateVoicePopup = true
+                                                    }) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Edit,
+                                                            contentDescription = "Edit",
+                                                            tint = Color.Gray
+                                                        )
+                                                    }
+
+                                                    IconButton(onClick = {
+                                                        viewModel.deleteVoice(voice.id) {
+                                                            viewModel.getAllVoices(selectedCommunityId!!.toLong(), { })
+                                                        }
+                                                    }) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Delete,
+                                                            contentDescription = "Delete",
+                                                            tint = Color.Red
+                                                        )
+                                                    }
+                                                }
+                                            }
                                         }
 
                                         Spacer(modifier = Modifier.height(4.dp))
@@ -679,6 +778,8 @@ class HomeView {
             }
         }
     }
+
+
 
     @Composable
     fun MessageBubble(sender: String, message: String) {

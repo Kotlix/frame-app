@@ -2,7 +2,7 @@ package presentation.viewmodel
 
 import androidx.compose.runtime.mutableStateOf
 import data.model.response.ProfileInfo
-import data.usecase.*
+import data.usecase.profile.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

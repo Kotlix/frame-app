@@ -1,14 +1,28 @@
 package presentation.viewmodel
 
 import androidx.compose.runtime.mutableStateOf
-import data.model.request.CreateChatRequest
-import data.model.request.CreateDirectoryRequest
 import data.model.request.SendMessageRequest
-import data.model.response.ChatDto
-import data.model.response.MemberEntity
 import data.model.response.ProfileInfo
 import data.model.response.UserStateEntity
-import data.usecase.*
+import data.usecase.chat.CreateChatUseCase
+import data.usecase.chat.DeleteChatUseCase
+import data.usecase.chat.GetAllChatsUseCase
+import data.usecase.chat.UpdateChatUseCase
+import data.usecase.community.*
+import data.usecase.directory.CreateDirectoryUseCase
+import data.usecase.directory.DeleteDirectoryUseCase
+import data.usecase.directory.GetAllDirectoriesUseCase
+import data.usecase.directory.UpdateDirectoryUseCase
+import data.usecase.message.GetAllMessagesUseCase
+import data.usecase.message.SendMessageUseCase
+import data.usecase.profile.GetMyProfileInfo
+import data.usecase.profile.GetProfileInfoUseCase
+import data.usecase.server.FetchVoiceServersUseCase
+import data.usecase.userstate.GetUserStateUseCase
+import data.usecase.voice.CreateVoiceUseCase
+import data.usecase.voice.DeleteVoiceUseCase
+import data.usecase.voice.GetAllVoicesUseCase
+import data.usecase.voice.UpdateVoiceUseCase
 import dto.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +51,11 @@ class HomeViewModel(
     private val getMyProfileInfo: GetMyProfileInfo,
     private val getProfileInfoUseCase: GetProfileInfoUseCase,
     private val getMembersUseCase: GetMembersUseCase,
-    private val getUserStateUseCase: GetUserStateUseCase
+    private val getUserStateUseCase: GetUserStateUseCase,
+    private val updateVoiceUseCase: UpdateVoiceUseCase,
+    private val updateDirectoryUseCase: UpdateDirectoryUseCase,
+    private val deleteVoiceUseCase: DeleteVoiceUseCase,
+    private val deleteDirectoryUseCase: DeleteDirectoryUseCase
 ) {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -439,6 +457,87 @@ class HomeViewModel(
                 } else {
                     errorMessage.value = error
                 }
+                errorMessage.value = error
+                callback()
+            }
+        }
+    }
+
+    fun deleteChat(chatId: Long, callback: () -> Unit) {
+        deleteChatUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            chatId = chatId
+        ) { error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                errorMessage.value = error
+                callback()
+            }
+        }
+    }
+
+    fun updateChat(chatId: Long, name: String, directoryId: Long, order: Int = 0, callback: () -> Unit) {
+        updateChatUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            chatId = chatId,
+            name = name,
+            directoryId = directoryId,
+            order = order
+        ) { data, error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                errorMessage.value = error
+                callback()
+            }
+        }
+    }
+
+    fun deleteVoice(voiceId: Long, callback: () -> Unit) {
+        deleteVoiceUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            voiceId = voiceId
+        ) { error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                errorMessage.value = error
+                callback()
+            }
+        }
+    }
+
+    fun updateVoice(voiceId: Long, name: String, directoryId: Long, order: Int = 0, callback: () -> Unit) {
+        updateVoiceUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            voiceId = voiceId,
+            name = name,
+            directoryId = directoryId,
+            order = order
+        ) { data, error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                errorMessage.value = error
+                callback()
+            }
+        }
+    }
+
+    fun deleteDirectory(directoryId: Long, callback: () -> Unit) {
+        deleteDirectoryUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            directoryId = directoryId
+        ) { error ->
+            viewModelScope.launch(Dispatchers.Default) {
+                errorMessage.value = error
+                callback()
+            }
+        }
+    }
+
+    fun updateDirectory(id: Long, name: String, directoryId: Long, order: Int = 0, callback: () -> Unit) {
+        updateDirectoryUseCase.execute(
+            token = getToken(),  //// INSERT!!!!!!!!!!!!
+            id = id,
+            name = name,
+            directoryId = directoryId,
+            order = order
+        ) { error ->
+            viewModelScope.launch(Dispatchers.Default) {
                 errorMessage.value = error
                 callback()
             }
