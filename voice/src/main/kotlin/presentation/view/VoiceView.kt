@@ -51,7 +51,11 @@ class VoiceView {
             VoiceWaveAnimation(modifier = Modifier.fillMaxSize())
 
             Button(
-                onClick = onLeaveClick,
+                onClick = {
+                    viewModel.leaveVoice(voiceId) {
+                        onLeaveClick()
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(
                     backgroundColor = Color.Blue
                 ),
