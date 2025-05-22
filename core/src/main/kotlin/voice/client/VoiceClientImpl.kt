@@ -8,6 +8,7 @@ import netty.NettyUdpClient
 import org.slf4j.LoggerFactory
 import ru.kotlix.frame.router.api.proto.RoutingContract
 import ru.kotlix.frame.session.api.proto.SessionContract
+import session.SessionManager
 import session.client.ping
 import session.client.wavePacket
 import voice.VoiceManager
@@ -32,7 +33,7 @@ class VoiceClientImpl : VoiceClient {
     private lateinit var connectionGuide: ConnectionGuide
     private lateinit var udpClient: NettyUdpClient
     private lateinit var bytesEncoder: ReusableByteProcessor
-    private lateinit var servingThread: Thread
+    private var servingThread: Thread? = null
     private lateinit var voicePacketsProducer: VoicePacketsProducer
     private var partyUsers = listOf<PartyUser>()
     private var lastPackets = ConcurrentHashMap<Int, Instant>()
@@ -103,7 +104,6 @@ class VoiceClientImpl : VoiceClient {
         val read = tdl.read(buffer, 0, buffer.size)
         if (read != 0) {
             val waveEncrypted = bytesEncoder.process(buffer)
-            logger.info("SPEAK")
             sendPacket(
                 wavePacket(
                     channelId = connectionGuide.channelId,
@@ -131,14 +131,15 @@ class VoiceClientImpl : VoiceClient {
     override fun shutdown() {
         if (isStarted) {
             udpClient.disconnect()
-            if (::servingThread.isInitialized) {
+            if (servingThread != null) {
                 VoiceManager.audioService.getInput()?.let {
                     AudioSystemTools.close(it)
                 }
                 VoiceManager.audioService.getOutput()?.let {
                     AudioSystemTools.close(it)
                 }
-                servingThread.interrupt()
+                servingThread!!.interrupt()
+                servingThread = null
             }
             isStarted = false
         }
@@ -153,11 +154,12 @@ class VoiceClientImpl : VoiceClient {
             logger.info("EARLY VOICE NOTIFY")
             return
         }
-        partyUsers = packet.partyList.map {
-            PartyUser(it.userId, it.shadowId)
-        } + PartyUser(packet.changed.userId, packet.changed.shadowId)
+        partyUsers = (
+                packet.partyList.map { PartyUser(it.userId, it.shadowId) } +
+                        PartyUser(packet.changed.userId, packet.changed.shadowId)
+                ).filter { it.shadowId != connectionGuide.shadowId }
         logger.info("Updated current state to $partyUsers")
-        if (!::servingThread.isInitialized) {
+        if (servingThread == null) {
             begin()
         }
     }

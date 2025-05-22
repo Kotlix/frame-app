@@ -21,7 +21,6 @@ class VoicePacketsProducer(
     private val decoder = AesBytesDecoder(secret)
 
     override fun channelRead0(ctx: ChannelHandlerContext?, pkt: DatagramPacket?) {
-        logger.info("LISTEN")
         val context = ctx ?: return
         val datagram = pkt ?: return
         val packet = try {
