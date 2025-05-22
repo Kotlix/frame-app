@@ -5,17 +5,16 @@ import io.netty.channel.Channel
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.nio.NioEventLoopGroup
-import io.netty.channel.socket.nio.NioSocketChannel
+import io.netty.channel.socket.DatagramPacket
+import io.netty.channel.socket.nio.NioDatagramChannel
 import org.slf4j.LoggerFactory
-import ru.kotlix.frame.session.api.proto.SessionContract
+import ru.kotlix.frame.router.api.proto.RoutingContract
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class NettyTcpClient(
-    private val host: String,
-    private val port: Int,
-    private val sessionPacketHandler: SimpleChannelInboundHandler<SessionContract.ServerPacket>
+class NettyUdpClient(
+    private val voicePacketHandler: SimpleChannelInboundHandler<DatagramPacket>
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -27,11 +26,11 @@ class NettyTcpClient(
         workerGroup = NioEventLoopGroup()
 
         return try {
-            channel = start(workerGroup, host, port)
-            logger.info("Netty session server connected.")
+            channel = start(workerGroup)
+            logger.info("Netty voice started.")
             true
         } catch (ex: Exception) {
-            logger.error("Error during netty session connect", ex)
+            logger.error("Error during netty voice start.", ex)
             disconnect()
             false
         }
@@ -40,22 +39,20 @@ class NettyTcpClient(
     fun disconnect() {
         if (::workerGroup.isInitialized) {
             workerGroup.shutdownGracefully()
-            logger.info("Netty disconnected from session server.")
+            logger.info("Netty voice shutdown.")
         }
     }
 
     private suspend fun start(
         group: EventLoopGroup,
-        host: String,
-        port: Int
     ): Channel = suspendCoroutine { cont ->
         try {
             val boostrap = Bootstrap()
                 .group(group)
-                .channel(NioSocketChannel::class.java)
-                .handler(SocketChannelPipeline(sessionPacketHandler))
+                .channel(NioDatagramChannel::class.java)
+                .handler(DatagramChannelPipeline(voicePacketHandler))
 
-            val chFuture = boostrap.connect(host, port)
+            val chFuture = boostrap.bind(0)
 
             chFuture.addListener {
                 if (it.isSuccess) {

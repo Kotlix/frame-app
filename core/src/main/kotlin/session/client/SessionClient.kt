@@ -1,6 +1,6 @@
 package session.client
 
-import session.client.exception.ConnectionFailedException
+import exception.ConnectionFailedException
 import session.client.handler.ServerPacketListenerRegistry
 import kotlin.jvm.Throws
 

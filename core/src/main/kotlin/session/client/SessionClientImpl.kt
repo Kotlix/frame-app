@@ -10,11 +10,13 @@ import kotlinx.coroutines.launch
 import netty.NettyTcpClient
 import org.slf4j.LoggerFactory
 import ru.kotlix.frame.session.api.proto.SessionContract
-import session.client.exception.ConnectionFailedException
+import session.SessionManager
+import exception.ConnectionFailedException
 import session.client.handler.ServerPacketFilter
 import session.client.handler.ServerPacketListenerRegistry
 import session.client.handler.ServerPacketListenerRegistryImpl
 import session.client.handler.ServerPacketListenerWatcher
+import voice.VoiceManager
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -27,9 +29,7 @@ class SessionClientImpl : SessionClient {
     private val packetHandler = ServerPacketListenerRegistryImpl()
 
     private var newPid: Long = 0
-        get() {
-            return field++
-        }
+        get() = field++
 
     private fun newNettyTcpClient() =
         NettyTcpClient(
@@ -60,6 +60,7 @@ class SessionClientImpl : SessionClient {
         heartbeatJob = startHeartbeat()
         logger.info("Heartbeat set.")
         isConnected = true
+        syncVoiceClient()
     }
 
     private suspend fun authorize(
@@ -123,6 +124,15 @@ class SessionClientImpl : SessionClient {
                     tcpClient.channel.writeAndFlush(heartbeat())
                 }
             }
+
+    private fun syncVoiceClient() {
+        packetHandler.register(
+            { it.hasVoiceNotify() },
+            ServerPacketListenerWatcher.Forever
+        ) { packet ->
+            VoiceManager.voiceClient.onVoiceNotify(packet!!.voiceNotify)
+        }
+    }
 
     private fun causeToExceptionReason(
         cause: SessionContract.ServerPacket.SessionBreak.BreakCause

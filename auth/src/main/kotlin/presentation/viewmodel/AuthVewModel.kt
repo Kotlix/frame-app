@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import presentation.viewstate.AuthState
 import session.SessionManager
-import session.client.exception.ConnectionFailedException
+import exception.ConnectionFailedException
 
 class AuthViewModel(
     private val loginUseCase: LoginUseCase,

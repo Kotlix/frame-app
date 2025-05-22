@@ -1,4 +1,4 @@
-package session.client.exception
+package exception
 
 class ConnectionFailedException(message: String, val reason: Reason) : RuntimeException(message) {
     enum class Reason {

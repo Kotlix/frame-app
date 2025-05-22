@@ -25,6 +25,7 @@ class JoinVoiceChatUseCase(
                     val resp = response.body()!!
                     val result = ConnectionGuideEntity(
                         resp.hostAddress,
+                        resp.secret,
                         resp.channelId,
                         resp.shadowId
                     )

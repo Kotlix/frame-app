@@ -19,7 +19,8 @@ dependencies {
     //implementation(platform("org.jetbrains.compose:compose-bom:2023.06.00")) // Попробуй более новую версию
     //implementation("org.jetbrains.compose.desktop:desktop-common")
 
-    api("ru.kotlix:frame-session-api-proto:1.0.1-SNAPSHOT")
+    api("ru.kotlix:frame-session-api-proto:1.0.2-SNAPSHOT")
+    api("ru.kotlix:frame-router-api-proto:1.0.5-SNAPSHOT")
 
     api("com.google.protobuf:protobuf-java:4.28.2")
     implementation("io.netty:netty-all:4.1.114.Final")

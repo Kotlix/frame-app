@@ -1,5 +1,7 @@
 package session.client
 
+import com.google.protobuf.ByteString
+import ru.kotlix.frame.router.api.proto.RoutingContract
 import ru.kotlix.frame.session.api.proto.SessionContract
 
 fun authRequest(
@@ -30,3 +32,29 @@ fun messageNotifyPrefs(
                 .addAllCommunityId(communityId)
                 .setPid(pid)
         ).build()
+
+fun ping(
+    channelId: Long,
+    shadowId: Int,
+): RoutingContract.RtcPacket =
+    RoutingContract.RtcPacket.newBuilder()
+        .setPing(RoutingContract.Ping.newBuilder().build())
+        .setChannelId(channelId)
+        .setShadowId(shadowId)
+        .build()
+
+fun wavePacket(
+    channelId: Long,
+    shadowId: Int,
+    order: Int,
+    waveData: ByteArray
+): RoutingContract.RtcPacket =
+    RoutingContract.RtcPacket.newBuilder()
+        .setWave(
+            RoutingContract.WavePacket.newBuilder()
+                .setOrder(order)
+                .setPayload(ByteString.copyFrom(waveData))
+        )
+        .setChannelId(channelId)
+        .setShadowId(shadowId)
+        .build()

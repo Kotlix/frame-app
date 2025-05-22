@@ -21,7 +21,7 @@ dependencies {
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
 
-    implementation("ru.kotlix:frame-gateway-retrofit-client:1.0.5-SNAPSHOT")
+    implementation("ru.kotlix:frame-gateway-retrofit-client:1.0.8-SNAPSHOT")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
