@@ -7,7 +7,7 @@ plugins {
     id("com.google.protobuf") version "0.9.5" apply false
 }
 
-fun RepositoryHandler.kotlix(repo: String) = maven {
+    fun RepositoryHandler.kotlix(repo: String) = maven {
     name = "GitHubPackages"
     url = URI.create("https://maven.pkg.github.com/Kotlix/$repo")
     credentials {
@@ -26,4 +26,7 @@ allprojects {
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
 }
+
+
+
 

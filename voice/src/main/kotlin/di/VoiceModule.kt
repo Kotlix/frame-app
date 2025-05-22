@@ -1,5 +1,6 @@
 package di
 
+import AppConfig
 import com.google.gson.GsonBuilder
 import data.usecases.JoinVoiceChatUseCase
 import data.usecases.LeaveVoiceUseCase
@@ -23,19 +24,19 @@ val voiceModule = module {
     }
 
     // Retrofit instance
-    single {
-        val gson = GsonBuilder()
-            .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
-            .create()
-
-        Retrofit.Builder()
-            //.baseUrl("http://84.54.59.98:30084")
-            .baseUrl(AppConfig.BASE_URL)
-            .client(get())
-            .addConverterFactory(ScalarsConverterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
-    }
+//    single {
+//        val gson = GsonBuilder()
+//            .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
+//            .create()
+//
+//        Retrofit.Builder()
+//            //.baseUrl("http://84.54.59.98:30084")
+//            .baseUrl(AppConfig.BASE_URL)
+//            .client(get())
+//            .addConverterFactory(ScalarsConverterFactory.create())
+//            .addConverterFactory(GsonConverterFactory.create(gson))
+//            .build()
+//    }
 
     // API interface
 

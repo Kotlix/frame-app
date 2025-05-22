@@ -3,15 +3,21 @@ package presentation.view
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import di.voiceModule
@@ -20,6 +26,7 @@ import org.koin.mp.KoinPlatform.getKoin
 import presentation.viewmodel.VoiceViewModel
 import kotlin.math.sin
 
+
 class VoiceView {
     @Composable
     fun VoiceView(
@@ -27,8 +34,12 @@ class VoiceView {
         voiceId: Long,
         onLeaveClick: () -> Unit
     ) {
+        //val connectionGuide by viewModel.connectionGuide
+
         LaunchedEffect("once") {
-            viewModel.joinVoice(voiceId) {}
+            viewModel.joinVoice(voiceId) {
+                // TODO: after connection
+            }
         }
 
         Box(

@@ -34,7 +34,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
 import ru.kotlix.frame.gateway.client.*
 import utils.LocalDateTimeAdapter
+import utils.OffsetDateTimeAdapter
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 
 
 val homeModule = module {
@@ -49,6 +51,7 @@ val homeModule = module {
     single {
         val gson = GsonBuilder()
             .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
+            .registerTypeAdapter(OffsetDateTime::class.java, OffsetDateTimeAdapter())
             .create()
 
         Retrofit.Builder()

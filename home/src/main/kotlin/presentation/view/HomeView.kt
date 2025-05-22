@@ -4,6 +4,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -346,6 +347,7 @@ class HomeView {
                 viewModel.getAllVoices(selectedCommunityId!!.toLong(), {})
                 viewModel.getMembers(selectedCommunityId!!.toLong()) {
                     viewModel.getUserNameMap { }
+                    viewModel.getMembersState { }
                 }
 
             } catch (e: Exception) {
@@ -519,7 +521,7 @@ class HomeView {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Box(
                             modifier = Modifier
-                                .weight(1f)
+                                .weight(0.5f)
                                 .background(Color(0xFFEFEFEF))
                                 .padding(4.dp)
                         ) {
@@ -527,11 +529,19 @@ class HomeView {
                         }
                         Box(
                             modifier = Modifier
-                                .weight(2f)
-                                .background(Color(0xFFA6E3A1))
+                                .weight(1f)
+                                .background(Color(0x9403fcaa))
                                 .padding(4.dp)
                         ) {
                             Text((if (selectedChatId.isNullOrBlank()) "Select a chat" else chats.find { it.id.toString() == selectedChatId }?.name) ?: "chats")
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .background(Color(0xFFEFEFEF))
+                                .padding(4.dp)
+                        ) {
+                            Text("Members")
                         }
                     }
 
@@ -701,48 +711,40 @@ class HomeView {
                                     Text("Send")
                                 }
                             }
-                            // Ошибка
-                            Box(
-                                modifier = Modifier.fillMaxWidth().padding(top = 4.dp).background(Color(0xFFFFC0C0)),
-                                contentAlignment = Alignment.CenterEnd
-                            ) {
-                                Text("Server Error 500", color = Color.Red, modifier = Modifier.padding(4.dp))
+//                            // Ошибка
+//                            Box(
+//                                modifier = Modifier.fillMaxWidth().padding(top = 4.dp).background(Color(0xFFFFC0C0)),
+//                                contentAlignment = Alignment.CenterEnd
+//                            ) {
+//                                Text("Server Error 500", color = Color.Red, modifier = Modifier.padding(4.dp))
+//                            }
+                        }
+
+                        // Правая панель: пользователи
+                        Column(
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .fillMaxHeight()
+                                .border(1.dp, Color.Gray)
+                                .padding(4.dp)
+                        ) {
+                            for (userId in members.filter { it != myProfile?.id }) {
+                                UserTag(idUserNameMap[userId] ?: "Unknown Name",
+                                    membersState.find { it.userId == userId }?.online ?: false)
                             }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            //Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
+//                Spacer(modifier = Modifier.height(8.dp))
+//                RemovableUser("onar")
+//                RemovableUser("admin")
                         }
                     }
+
+
                 }
 
                 Spacer(modifier = Modifier.width(4.dp))
 
-                // Правая панель: пользователи
-                Column(
-                    modifier = Modifier
-                        .weight(0.5f)
-                        .fillMaxHeight()
-                        .border(1.dp, Color.Gray)
-                        .padding(4.dp)
-                ) {
-                    Text("users", modifier = Modifier.padding(bottom = 4.dp))
-                    Text("online", modifier = Modifier.padding(vertical = 2.dp))
-                    for (userId in members.filter { it != myProfile?.id }.filter {
-                        membersState.find { a -> a.userId == it }?.online ?: false
-                    }
-                    ) {
-                        UserTag(idUserNameMap[userId] ?: "Unknown Name")
-                    }
-                    Text("offline", modifier = Modifier.padding(top = 8.dp, bottom = 2.dp))
-                    for (userId in members.filter { it != myProfile?.id }.filter {
-                        val pred = membersState.find { a -> a.userId == it }?.online ?: false
-                        !pred
-                    }) {
-                        UserTag(idUserNameMap[userId] ?: "Unknown Name")
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    //Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("+") }
-//                Spacer(modifier = Modifier.height(8.dp))
-//                RemovableUser("onar")
-//                RemovableUser("admin")
-                }
             }
         }
     }
@@ -1049,7 +1051,7 @@ class HomeView {
                 Text(
                     message, modifier = Modifier
                         .padding(start = 16.dp)
-                        .background(Color.Blue)
+                        .background(Color(0x03DFFCFF))
                         .padding(6.dp)
                 )
             }
@@ -1058,14 +1060,27 @@ class HomeView {
 
     @Composable
     fun UserTag(name: String, highlight: Boolean = false) {
-        Text(
-            name,
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(if (highlight) Color(0xFFFFFF88) else Color.Transparent)
-                .padding(4.dp)
-        )
+                .background(Color.Transparent)
+                .padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = name)
+
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(
+                        color = if (highlight) Color(0xFF4CAF50) else Color.Red,
+                        shape = CircleShape
+                    )
+            )
+        }
     }
+
 
     @Composable
     fun RemovableUser(name: String) {

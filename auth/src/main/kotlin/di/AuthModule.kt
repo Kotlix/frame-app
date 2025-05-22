@@ -15,20 +15,20 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 
 val authModule = module {
 
-    single {
-        OkHttpClient.Builder()
-            .build()
-    }
-
-    single {
-        Retrofit.Builder()
-            //.baseUrl("http://localhost:8080")
-            .baseUrl(AppConfig.BASE_URL)
-            .client(get())
-            .addConverterFactory(ScalarsConverterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
+//    single {
+//        OkHttpClient.Builder()
+//            .build()
+//    }
+//
+//    single {
+//        Retrofit.Builder()
+//            //.baseUrl("http://localhost:8080")
+//            .baseUrl(AppConfig.BASE_URL)
+//            .client(get())
+//            .addConverterFactory(ScalarsConverterFactory.create())
+//            .addConverterFactory(GsonConverterFactory.create())
+//            .build()
+//    }
 
     single<AuthApi> {
         get<Retrofit>().create(AuthApi::class.java)
