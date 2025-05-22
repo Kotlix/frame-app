@@ -1106,22 +1106,20 @@ class HomeView {
             showCommunityScreen = true
         }
 
-        if (showCommunityScreen) {
-            HomeView().CommunityScreen(viewModel,
-                onSearchClick = {
-                    showCommunityScreen = true
-                    showProfilePopup = false
-                                },
-                onProfileClick = {
-                    showCommunityScreen = false
-                    showProfilePopup = true
-                }
-            )
-
-        } else if(showProfilePopup) {
+        if(showProfilePopup) {
             ProfilePopup().ProfilePopup(KoinPlatform.getKoin().get<ProfileViewModel>()) {
                 showProfilePopup = false
             }
+
+        } else if (showCommunityScreen) {
+            HomeView().CommunityScreen(viewModel,
+                onSearchClick = {
+                    showCommunityScreen = false
+                },
+                onProfileClick = {
+                    showProfilePopup = true
+                }
+            )
         } else {
                 HomeView().HomeScreen(
                     viewModel,
