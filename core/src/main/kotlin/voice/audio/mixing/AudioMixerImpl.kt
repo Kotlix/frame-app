@@ -3,21 +3,23 @@ package voice.audio.mixing
 import org.slf4j.LoggerFactory
 import voice.VoiceManager
 import voice.audio.AudioSystemTools
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.PriorityBlockingQueue
 
 class AudioMixerImpl(
     private val onPacket: (Map<Int, Long>) -> Unit
 ) : AudioMixer {
     private val logger = LoggerFactory.getLogger(this::class.java)
+    private val streamBuffers = ConcurrentHashMap<Int, PriorityBlockingQueue<OrderedPacket>>()
 
-    private val streamBuffers = ConcurrentHashMap<Int, PriorityQueue<OrderedPacket>>()
     private val lastPackets = ConcurrentHashMap<Int, Long>()
     private val bufferSize = AudioSystemTools.audioFrameBufferSize
     private val silenceBuffer = ByteArray(bufferSize)
 
     override fun addPacket(shadowId: Int, packet: OrderedPacket) {
-        val queue = streamBuffers.computeIfAbsent(shadowId) { PriorityQueue() }
+        val queue = streamBuffers.computeIfAbsent(shadowId) {
+            PriorityBlockingQueue<OrderedPacket>(11)
+        }
         queue.offer(packet)
 
         val timestamp = System.currentTimeMillis()
@@ -40,14 +42,10 @@ class AudioMixerImpl(
         val mixedFrame = ByteArray(bufferSize)
 
         streamBuffers.forEach { (id, queue) ->
-            val packet = queue.poll()
-
-            val data = when {
-                packet != null && packet.data.size == bufferSize -> packet.data
-                else -> silenceBuffer
-            }
+            val data = queue.poll()?.data ?: silenceBuffer
 
             mixInto(mixedFrame, data)
+            queue.clear()
         }
 
         sdl.write(mixedFrame, 0, mixedFrame.size)

@@ -6,5 +6,5 @@ data class OrderedPacket(
 ) : Comparable<OrderedPacket> {
 
     override fun compareTo(other: OrderedPacket): Int =
-        -order.compareTo(other.order)
+        order.compareTo(other.order)
 }
