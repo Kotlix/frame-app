@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentMap
 
 class VoicePacketsListener(
     secret: String,
+    private val ignoredShadowId: Int,
     private val targetMixer: AudioMixer,
     private val voiceSourceValidator: VoiceSourceValidator
 ) : SimpleChannelInboundHandler<DatagramPacket>() {
@@ -36,6 +37,9 @@ class VoicePacketsListener(
         if (!packet.hasWave()) {
             return
         }
+        if (packet.shadowId == ignoredShadowId) {
+            return
+        }
         // producing sound
         val data = packet.wave.payload.toByteArray()
         val payload = decoder.process(data)
@@ -44,7 +48,6 @@ class VoicePacketsListener(
             packet.shadowId,
             OrderedPacket(
                 order = packet.wave.order,
-                timestamp = System.currentTimeMillis(),
                 data = payload
             )
         )

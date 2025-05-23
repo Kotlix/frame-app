@@ -12,9 +12,9 @@ class AudioMixerImpl(
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     private val streamBuffers = ConcurrentHashMap<Int, PriorityQueue<OrderedPacket>>()
+    private val lastPackets = ConcurrentHashMap<Int, Long>()
     private val bufferSize = AudioSystemTools.audioFrameBufferSize
     private val silenceBuffer = ByteArray(bufferSize)
-    private val lastPackets = ConcurrentHashMap<Int, Long>()
 
     override fun addPacket(shadowId: Int, packet: OrderedPacket) {
         val queue = streamBuffers.computeIfAbsent(shadowId) { PriorityQueue() }
@@ -70,8 +70,8 @@ class AudioMixerImpl(
 
     private fun cleanInactiveUsers() {
         val now = System.currentTimeMillis()
-        streamBuffers.entries.removeIf { (_, queue) ->
-            val last = queue.peek()?.timestamp ?: return@removeIf true
+        streamBuffers.entries.removeIf { (shid, queue) ->
+            val last = lastPackets[shid] ?: return@removeIf true
             now - last > 5000
         }
     }

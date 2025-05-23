@@ -54,7 +54,7 @@ class VoiceClientImpl : VoiceClient {
         }
 
         udpClient = NettyUdpClient(
-            VoicePacketsListener(secret, audioMixer) { c, s ->
+            VoicePacketsListener(secret, connectionGuide.shadowId, audioMixer) { c, s ->
                 if (connectionGuide.channelId != c) {
                     return@VoicePacketsListener false
                 }
@@ -91,13 +91,10 @@ class VoiceClientImpl : VoiceClient {
                     playAt = now + AudioSystemTools.audioFrameMs
                 }
 
-                val sleepTime = minOf(pingAt, playAt) - System.currentTimeMillis()
-                if (sleepTime > 0) {
-                    try {
-                        Thread.sleep(sleepTime)
-                    } catch (ex: InterruptedException) {
-                        break
-                    }
+                try {
+                    Thread.sleep(1L)
+                } catch (ex: InterruptedException) {
+                    break
                 }
             }
         }
