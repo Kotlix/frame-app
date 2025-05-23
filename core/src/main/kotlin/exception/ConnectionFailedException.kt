@@ -1,6 +1,6 @@
 package exception
 
-class ConnectionFailedException(message: String, val reason: Reason) : RuntimeException(message) {
+class ConnectionFailedException(message: String, val reason: Reason) : RuntimeException("$message $reason") {
     enum class Reason {
         NOT_CONNECTED,
         CONNECTED_TIMED_OUT,

@@ -10,15 +10,18 @@ import javax.sound.sampled.TargetDataLine
 object AudioSystemTools {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    private val audioFormat = AudioFormat(
-        AudioFormat.Encoding.PCM_SIGNED,  // or PCM_SIGNED
-        16000.0F,                           // Sample rate (8 kHz)
-        8,                                 // Sample size in bits (8-bit)
-        1,                                 // Mono (1 channel)
-        1,                                 // Frame size (1 byte per frame)
-        16000.0F,                           // Frame rate (same as sample rate)
-        false                              // Little-endian (false = big-endian)
-    );
+    val audioFormat = AudioFormat(
+        AudioFormat.Encoding.PCM_SIGNED,
+        16000.0F,
+        16,
+        1,
+        2,
+        16000.0F,
+        false
+    )
+
+    val audioFrameMs = 20
+    val audioFrameBufferSize = audioFormat.sampleRate.toInt() * audioFrameMs / 1000 * audioFormat.frameSize
 
     fun getMixers() = AudioSystem.getMixerInfo().map { AudioSystem.getMixer(it) }
 

@@ -12,4 +12,6 @@ interface VoiceClient {
     fun shutdown()
 
     fun onVoiceNotify(packet: VoiceNotify)
+
+    fun bindAttendantsCallback(callback: (List<Pair<Long, Long>>) -> Unit)
 }

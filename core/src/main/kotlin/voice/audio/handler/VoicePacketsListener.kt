@@ -1,4 +1,4 @@
-package voice.client.handler
+package voice.audio.handler
 
 import com.google.protobuf.InvalidProtocolBufferException
 import io.netty.channel.ChannelHandlerContext
@@ -7,14 +7,14 @@ import io.netty.channel.socket.DatagramPacket
 import org.slf4j.LoggerFactory
 import ru.kotlix.frame.router.api.proto.RoutingContract
 import voice.VoiceManager
+import voice.audio.mixing.AudioMixer
+import voice.audio.mixing.OrderedPacket
 import voice.audio.security.AesBytesDecoder
-import java.time.Instant
 import java.util.concurrent.ConcurrentMap
-import kotlin.math.log
 
-class VoicePacketsProducer(
+class VoicePacketsListener(
     secret: String,
-    private val lastPacket: ConcurrentMap<Int, Instant>,
+    private val targetMixer: AudioMixer,
     private val voiceSourceValidator: VoiceSourceValidator
 ) : SimpleChannelInboundHandler<DatagramPacket>() {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -33,13 +33,6 @@ class VoicePacketsProducer(
         if (!validateSource(packet)) {
             return
         }
-        if (VoiceManager.audioService.isOutputMuted) {
-            return
-        }
-        val sdl = VoiceManager.audioService.getOutput() ?: return
-        if (!sdl.isOpen) {
-            return
-        }
         if (!packet.hasWave()) {
             return
         }
@@ -47,8 +40,14 @@ class VoicePacketsProducer(
         val data = packet.wave.payload.toByteArray()
         val payload = decoder.process(data)
 
-        sdl.write(payload, 0, payload.size)
-        lastPacket[packet.shadowId] = Instant.now()
+        targetMixer.addPacket(
+            packet.shadowId,
+            OrderedPacket(
+                order = packet.wave.order,
+                timestamp = System.currentTimeMillis(),
+                data = payload
+            )
+        )
     }
 
     private fun validateSource(packet: RoutingContract.RtcPacket): Boolean =

@@ -8,40 +8,32 @@ import netty.NettyUdpClient
 import org.slf4j.LoggerFactory
 import ru.kotlix.frame.router.api.proto.RoutingContract
 import ru.kotlix.frame.session.api.proto.SessionContract
-import session.SessionManager
 import session.client.ping
 import session.client.wavePacket
 import voice.VoiceManager
 import voice.audio.AudioSystemTools
+import voice.audio.mixing.AudioMixer
+import voice.audio.mixing.AudioMixerImpl
 import voice.audio.security.AesBytesEncoder
 import voice.audio.security.ReusableByteProcessor
-import voice.client.handler.VoicePacketsProducer
+import voice.audio.handler.VoicePacketsListener
+import voice.audio.producer.AudioProducer
+import voice.audio.producer.AudioProducerImpl
 import voice.dto.ConnectionGuide
 import voice.dto.PartyUser
 import java.net.InetSocketAddress
-import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
-import kotlin.math.log
 
 class VoiceClientImpl : VoiceClient {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    private val bufferSize = 32
-    private val buffer = ByteArray(bufferSize)
-
     private lateinit var connectionGuide: ConnectionGuide
     private lateinit var udpClient: NettyUdpClient
     private lateinit var bytesEncoder: ReusableByteProcessor
-    private var servingThread: Thread? = null
-    private lateinit var voicePacketsProducer: VoicePacketsProducer
+    private lateinit var audioMixer: AudioMixer
+    private lateinit var audioProducer: AudioProducer
     private var partyUsers = listOf<PartyUser>()
-    private var lastPackets = ConcurrentHashMap<Int, Instant>()
-
-    override var pingDelayMs: Long = 5_000
-
-    var uniqueOrder: Int = 0
-        get() = field++
+    private var servingThread: Thread? = null
 
     private var isStarted: Boolean = false
 
@@ -54,16 +46,23 @@ class VoiceClientImpl : VoiceClient {
     ) {
         connectionGuide = VoiceManager.connectionGuide!!
         recipient = InetSocketAddress(host, port)
-
-        voicePacketsProducer = VoicePacketsProducer(secret, lastPackets) { c, s ->
-            if (connectionGuide.channelId != c) {
-                return@VoicePacketsProducer false
-            }
-            return@VoicePacketsProducer partyUsers.find { it.shadowId == s }?.let { true } ?: false
-        }
         bytesEncoder = AesBytesEncoder(secret)
-        udpClient = NettyUdpClient(voicePacketsProducer)
+        audioMixer = AudioMixerImpl { lastPackets ->
+            if (::attendantCallback.isInitialized) {
+                attendantCallback(partyUsers.map { it.userId to (lastPackets[it.shadowId] ?: 0) })
+            }
+        }
+
+        udpClient = NettyUdpClient(
+            VoicePacketsListener(secret, audioMixer) { c, s ->
+                if (connectionGuide.channelId != c) {
+                    return@VoicePacketsListener false
+                }
+                return@VoicePacketsListener partyUsers.find { it.shadowId == s }?.let { true } ?: false
+            }
+        )
         udpClient.connect()
+        audioProducer = AudioProducerImpl(secret, udpClient, recipient, connectionGuide)
 
         isStarted = true
         if (earlyPacket != null) {
@@ -73,60 +72,35 @@ class VoiceClientImpl : VoiceClient {
 
     override fun isStarted(): Boolean = isStarted
 
+    override var pingDelayMs: Long = 5_000
+
     private fun serve(): Thread =
         thread {
-            var pingAt = Instant.now().plusMillis(pingDelayMs)
+            var pingAt = System.currentTimeMillis() + pingDelayMs
+            var playAt = System.currentTimeMillis() + AudioSystemTools.audioFrameMs
             while (isStarted) {
-                // ping part
-                val now = Instant.now()
-                if (now.isAfter(pingAt)) {
-                    sendPacket(
-                        ping(
-                            channelId = connectionGuide.channelId,
-                            shadowId = connectionGuide.shadowId
-                        )
-                    )
-                    pingAt = now.plusMillis(pingDelayMs)
+                val now = System.currentTimeMillis()
+
+                if (now >= pingAt) {
+                    audioProducer.producePing()
+                    pingAt = now + pingDelayMs
                 }
-                // voice part
-                speak()
+                if (now >= playAt) {
+                    audioMixer.mixingEntrypoint()
+                    audioProducer.produceEntrypoint()
+                    playAt = now + AudioSystemTools.audioFrameMs
+                }
+
+                val sleepTime = minOf(pingAt, playAt) - System.currentTimeMillis()
+                if (sleepTime > 0) {
+                    try {
+                        Thread.sleep(sleepTime)
+                    } catch (ex: InterruptedException) {
+                        break
+                    }
+                }
             }
         }
-
-    private fun speak() {
-        if (VoiceManager.audioService.isInputMuted) {
-            return
-        }
-        val tdl = VoiceManager.audioService.getInput() ?: return
-        if (!tdl.isOpen) {
-            return
-        }
-        val read = tdl.read(buffer, 0, buffer.size)
-        if (read != 0) {
-            val waveEncrypted = bytesEncoder.process(buffer)
-            sendPacket(
-                wavePacket(
-                    channelId = connectionGuide.channelId,
-                    shadowId = connectionGuide.shadowId,
-                    order = uniqueOrder,
-                    waveData = waveEncrypted
-                )
-            )
-        }
-    }
-
-    private fun sendPacket(packet: RoutingContract.RtcPacket) {
-        udpClient.channel.writeAndFlush(DatagramPacket(encodeProto(packet), recipient))
-    }
-
-    private fun encodeProto(packet: Any): ByteBuf? {
-        if (packet is MessageLite) {
-            return Unpooled.wrappedBuffer(packet.toByteArray())
-        } else if (packet is MessageLite.Builder) {
-            return Unpooled.wrappedBuffer(packet.build().toByteArray())
-        }
-        return null
-    }
 
     override fun shutdown() {
         if (isStarted) {
@@ -146,19 +120,27 @@ class VoiceClientImpl : VoiceClient {
     }
 
     private var earlyPacket: SessionContract.VoiceNotify? = null
-
-    override fun onVoiceNotify(packet: SessionContract.VoiceNotify) {
-        logger.info("VOICE NOTIFY")
+    private fun handleEarlyPacket(packet: SessionContract.VoiceNotify) {
         if (!isStarted) {
             earlyPacket = packet
-            logger.info("EARLY VOICE NOTIFY")
+        }
+    }
+
+    override fun onVoiceNotify(packet: SessionContract.VoiceNotify) {
+        logger.info("Voice notify received.")
+        handleEarlyPacket(packet)
+        if (!isStarted) {
             return
         }
-        partyUsers = (
-                packet.partyList.map { PartyUser(it.userId, it.shadowId) } +
-                        PartyUser(packet.changed.userId, packet.changed.shadowId)
-                ).filter { it.shadowId != connectionGuide.shadowId }
+
+        partyUsers = packet.partyList.map { PartyUser(it.userId, it.shadowId) } +
+                PartyUser(packet.changed.userId, packet.changed.shadowId)
         logger.info("Updated current state to $partyUsers")
+
+        if (::attendantCallback.isInitialized) {
+            attendantCallback(partyUsers.map { it.userId to 0 })
+        }
+
         if (servingThread == null) {
             begin()
         }
@@ -172,5 +154,10 @@ class VoiceClientImpl : VoiceClient {
         VoiceManager.audioService.getOutput()?.let {
             AudioSystemTools.open(it)
         }
+    }
+
+    private lateinit var attendantCallback: (List<Pair<Long, Long>>) -> Unit
+    override fun bindAttendantsCallback(callback: (List<Pair<Long, Long>>) -> Unit) {
+        attendantCallback = callback
     }
 }

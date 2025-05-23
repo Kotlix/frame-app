@@ -1,7 +1,10 @@
 package presentation.viewmodel
 
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import cache.TimedCache
 import data.model.ConnectionGuideEntity
+import data.usecases.GetProfileInfoUseCase
 import data.usecases.JoinVoiceChatUseCase
 import data.usecases.LeaveVoiceUseCase
 import exception.ConnectionFailedException
@@ -15,10 +18,13 @@ import session.client.handler.ServerPacketFilter
 import session.client.handler.ServerPacketListenerWatcher
 import voice.VoiceManager
 import voice.dto.ConnectionGuide
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class VoiceViewModel(
     private val joinVoiceChatUseCase: JoinVoiceChatUseCase,
-    private val leaveVoiceUseCase: LeaveVoiceUseCase
+    private val leaveVoiceUseCase: LeaveVoiceUseCase,
+    private val getProfileInfoUseCase: GetProfileInfoUseCase
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -26,6 +32,8 @@ class VoiceViewModel(
 
     var errorMessage = mutableStateOf<String?>(null)
         private set
+
+    var attendants = mutableStateOf(listOf<Pair<Long, Long>>())
 
     fun getToken(): String {
         return SessionManager.token ?: ""
@@ -87,6 +95,29 @@ class VoiceViewModel(
                 VoiceManager.connectionGuide = null
                 errorMessage.value = error
                 callback()
+            }
+        }
+    }
+
+    private val userNames = TimedCache<Long, String>(ttlMillis = 5 * 60_000)
+
+    fun findUsername(userId: Long, callback: (username: String) -> Unit) {
+        val username = userNames.get(userId)
+        if (username != null) {
+            callback(username)
+            return
+        }
+
+        getProfileInfoUseCase.execute(
+            token = getToken(),
+            userId = userId,
+        ) { data, error ->
+            if (data != null) {
+                userNames.set(userId, data)
+                callback(data)
+            } else if (error != null) {
+                logger.error(error)
+                errorMessage.value = error
             }
         }
     }

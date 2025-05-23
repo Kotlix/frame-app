@@ -2,6 +2,7 @@ package di
 
 import AppConfig
 import com.google.gson.GsonBuilder
+import data.usecases.GetProfileInfoUseCase
 import data.usecases.JoinVoiceChatUseCase
 import data.usecases.LeaveVoiceUseCase
 import okhttp3.OkHttpClient
@@ -53,6 +54,10 @@ val voiceModule = module {
     }
 
     single {
-        VoiceViewModel(get(), get())
+        GetProfileInfoUseCase(get())
+    }
+
+    single {
+        VoiceViewModel(get(), get(), get())
     }
 }
