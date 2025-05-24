@@ -31,9 +31,7 @@ class VoicePacketsListener(
             return
         }
         // validation
-        if (!validateSource(packet)) {
-            return
-        }
+        val userId = validateSource(packet) ?: return
         if (!packet.hasWave()) {
             return
         }
@@ -45,7 +43,7 @@ class VoicePacketsListener(
         val payload = decoder.process(data)
 
         targetMixer.addPacket(
-            packet.shadowId,
+            userId,
             OrderedPacket(
                 order = packet.wave.order,
                 data = payload
@@ -53,6 +51,6 @@ class VoicePacketsListener(
         )
     }
 
-    private fun validateSource(packet: RoutingContract.RtcPacket): Boolean =
+    private fun validateSource(packet: RoutingContract.RtcPacket): Long? =
         voiceSourceValidator.validateSource(packet.channelId, packet.shadowId)
 }

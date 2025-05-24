@@ -34,10 +34,9 @@ class VoiceClientImpl : VoiceClient {
     private lateinit var audioProducer: AudioProducer
     private var partyUsers = listOf<PartyUser>()
     private var servingThread: Thread? = null
+    private lateinit var recipient: InetSocketAddress
 
     private var isStarted: Boolean = false
-
-    private lateinit var recipient: InetSocketAddress
 
     override suspend fun start(
         host: String,
@@ -47,22 +46,30 @@ class VoiceClientImpl : VoiceClient {
         connectionGuide = VoiceManager.connectionGuide!!
         recipient = InetSocketAddress(host, port)
         bytesEncoder = AesBytesEncoder(secret)
-        audioMixer = AudioMixerImpl { lastPackets ->
-            if (::attendantCallback.isInitialized) {
-                attendantCallback(partyUsers.map { it.userId to (lastPackets[it.shadowId] ?: 0) })
+        audioMixer = AudioMixerImpl { userId, stamp ->
+            if (::attendantsSpeakingCallback.isInitialized) {
+                val speaking = stamp > System.currentTimeMillis() - 20
+                attendantsSpeakingCallback(userId, speaking)
             }
         }
 
         udpClient = NettyUdpClient(
             VoicePacketsListener(secret, connectionGuide.shadowId, audioMixer) { c, s ->
                 if (connectionGuide.channelId != c) {
-                    return@VoicePacketsListener false
+                    return@VoicePacketsListener null
                 }
-                return@VoicePacketsListener partyUsers.find { it.shadowId == s }?.let { true } ?: false
+                val userId = partyUsers.find { it.shadowId == s }?.userId
+                return@VoicePacketsListener userId
             }
         )
         udpClient.connect()
-        audioProducer = AudioProducerImpl(secret, udpClient, recipient, connectionGuide)
+        audioProducer = AudioProducerImpl(secret, udpClient, recipient, connectionGuide) { speaking ->
+            if (::attendantsSpeakingCallback.isInitialized) {
+                ownUserId?.let {
+                    attendantsSpeakingCallback(it, speaking)
+                }
+            }
+        }
 
         isStarted = true
         if (earlyPacket != null) {
@@ -116,6 +123,17 @@ class VoiceClientImpl : VoiceClient {
         }
     }
 
+    override fun onVoiceNotify(packet: SessionContract.VoiceNotify) {
+        logger.info("Voice notify received.")
+        handleEarlyPacket(packet)
+        if (!isStarted) {
+            return
+        }
+        handleParty(packet)
+
+        servingThread ?: begin()
+    }
+
     private var earlyPacket: SessionContract.VoiceNotify? = null
     private fun handleEarlyPacket(packet: SessionContract.VoiceNotify) {
         if (!isStarted) {
@@ -123,23 +141,21 @@ class VoiceClientImpl : VoiceClient {
         }
     }
 
-    override fun onVoiceNotify(packet: SessionContract.VoiceNotify) {
-        logger.info("Voice notify received.")
-        handleEarlyPacket(packet)
-        if (!isStarted) {
-            return
+    private var ownUserId: Long? = null
+    private fun handleParty(packet: SessionContract.VoiceNotify) {
+        partyUsers = packet.partyList.map { PartyUser(it.userId, it.shadowId) }
+
+        if (packet.action == SessionContract.VoiceNotify.Action.JOINED) {
+            if (packet.changed.shadowId == connectionGuide.shadowId) {
+                ownUserId = packet.changed.userId
+            }
+            partyUsers += PartyUser(packet.changed.userId, packet.changed.shadowId)
         }
 
-        partyUsers = packet.partyList.map { PartyUser(it.userId, it.shadowId) } +
-                PartyUser(packet.changed.userId, packet.changed.shadowId)
         logger.info("Updated current state to $partyUsers")
 
-        if (::attendantCallback.isInitialized) {
-            attendantCallback(partyUsers.map { it.userId to 0 })
-        }
-
-        if (servingThread == null) {
-            begin()
+        if (::attendantsCallback.isInitialized) {
+            attendantsCallback(partyUsers.map { it.userId })
         }
     }
 
@@ -153,8 +169,18 @@ class VoiceClientImpl : VoiceClient {
         }
     }
 
-    private lateinit var attendantCallback: (List<Pair<Long, Long>>) -> Unit
-    override fun bindAttendantsCallback(callback: (List<Pair<Long, Long>>) -> Unit) {
-        attendantCallback = callback
+    private lateinit var attendantsCallback: (List<Long>) -> Unit
+    private lateinit var attendantsSpeakingCallback: (Long, Boolean) -> Unit
+
+    override fun bindAttendantsCallback(
+        attendantsCallback: (List<Long>) -> Unit,
+        attendantsSpeakingCallback: (Long, Boolean) -> Unit
+    ) {
+        logger.info("Registered UI callbacks")
+
+        this.attendantsCallback = attendantsCallback
+        this.attendantsSpeakingCallback = attendantsSpeakingCallback
+
+        attendantsCallback(partyUsers.map { it.userId })
     }
 }

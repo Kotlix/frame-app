@@ -15,10 +15,13 @@ import androidx.compose.ui.window.application
 import di.voiceModule
 import org.koin.core.context.startKoin
 import org.koin.mp.KoinPlatform.getKoin
+import org.slf4j.LoggerFactory
 import presentation.viewmodel.VoiceViewModel
 import voice.VoiceManager
 
 class VoiceView {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
     @Composable
     fun VoiceView(
         viewModel: VoiceViewModel,
@@ -27,13 +30,32 @@ class VoiceView {
     ) {
         var isMuted by mutableStateOf(VoiceManager.audioService.isInputMuted)
 
-        var attendants by viewModel.attendants
+        val attendants = remember { viewModel.attendants }
 
         LaunchedEffect("once") {
             viewModel.joinVoice(voiceId) {
-                VoiceManager.voiceClient.bindAttendantsCallback {
-                    attendants = it
-                }
+                VoiceManager.voiceClient.bindAttendantsCallback(
+                    { userIds ->
+                        if (userIds.size > attendants.size) {
+                            userIds.forEach {
+                                if (!attendants.contains(it)) {
+                                    attendants[it] = false
+                                }
+                            }
+                        } else if (userIds.size < attendants.size) {
+                            attendants.keys.forEach {
+                                if (!userIds.contains(it)) {
+                                    attendants.remove(it)
+                                }
+                            }
+                        }
+                    },
+                    { userId, speak ->
+                        if (attendants.contains(userId)) {
+                            attendants[userId] = speak
+                        }
+                    }
+                )
             }
         }
 
@@ -48,8 +70,7 @@ class VoiceView {
                     .background(Color(0xFF121212))
                     .padding(bottom = 32.dp)
             ) {
-                attendants.forEach { (id, timestamp) ->
-                    val speaking = System.currentTimeMillis() - timestamp < 1_000
+                attendants.forEach { (id, speaking) ->
                     var username by remember { mutableStateOf("unknown") }
                     viewModel.findUsername(id) {
                         username = it

@@ -18,6 +18,7 @@ import session.client.handler.ServerPacketFilter
 import session.client.handler.ServerPacketListenerWatcher
 import voice.VoiceManager
 import voice.dto.ConnectionGuide
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -33,7 +34,7 @@ class VoiceViewModel(
     var errorMessage = mutableStateOf<String?>(null)
         private set
 
-    var attendants = mutableStateOf(listOf<Pair<Long, Long>>())
+    var attendants = mutableStateMapOf<Long, Boolean>()
 
     fun getToken(): String {
         return SessionManager.token ?: ""

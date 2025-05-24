@@ -13,5 +13,8 @@ interface VoiceClient {
 
     fun onVoiceNotify(packet: VoiceNotify)
 
-    fun bindAttendantsCallback(callback: (List<Pair<Long, Long>>) -> Unit)
+    fun bindAttendantsCallback(
+        attendantsCallback: (List<Long>) -> Unit,
+        attendantsSpeakingCallback: (Long, Boolean) -> Unit
+    )
 }

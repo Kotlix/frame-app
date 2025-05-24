@@ -7,27 +7,27 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.PriorityBlockingQueue
 
 class AudioMixerImpl(
-    private val onPacket: (Map<Int, Long>) -> Unit
+    private val onPacket: (Long, Long) -> Unit
 ) : AudioMixer {
     private val logger = LoggerFactory.getLogger(this::class.java)
-    private val streamBuffers = ConcurrentHashMap<Int, PriorityBlockingQueue<OrderedPacket>>()
+    private val streamBuffers = ConcurrentHashMap<Long, PriorityBlockingQueue<OrderedPacket>>()
 
-    private val lastPackets = ConcurrentHashMap<Int, Long>()
+    private val lastPackets = ConcurrentHashMap<Long, Long>()
     private val bufferSize = AudioSystemTools.audioFrameBufferSize
     private val silenceBuffer = ByteArray(bufferSize)
 
-    override fun addPacket(shadowId: Int, packet: OrderedPacket) {
-        val queue = streamBuffers.computeIfAbsent(shadowId) {
+    override fun addPacket(userId: Long, packet: OrderedPacket) {
+        val queue = streamBuffers.computeIfAbsent(userId) {
             PriorityBlockingQueue<OrderedPacket>(11)
         }
-        queue.offer(packet)
 
-        val timestamp = System.currentTimeMillis()
-        lastPackets[shadowId] = timestamp
+        queue.offer(packet)
+        val stamp = System.currentTimeMillis()
+        lastPackets[userId] = stamp
+        onPacket(userId, stamp)
     }
 
     override fun mixingEntrypoint() {
-        onPacket(lastPackets)
         mix()
         cleanInactiveUsers()
     }
@@ -42,7 +42,10 @@ class AudioMixerImpl(
         val mixedFrame = ByteArray(bufferSize)
 
         streamBuffers.forEach { (id, queue) ->
-            val data = queue.poll()?.data ?: silenceBuffer
+            val data = queue.poll()?.data ?: run {
+                logger.info("EMPTY")
+                silenceBuffer
+            }
 
             mixInto(mixedFrame, data)
             queue.clear()
