@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.PriorityBlockingQueue
 
 class AudioMixerImpl(
-    private val onPacket: (Long, Long) -> Unit
+    private val onPacket: (Long, Boolean) -> Unit
 ) : AudioMixer {
     private val logger = LoggerFactory.getLogger(this::class.java)
     private val streamBuffers = ConcurrentHashMap<Long, PriorityBlockingQueue<OrderedPacket>>()
@@ -24,7 +24,6 @@ class AudioMixerImpl(
         queue.offer(packet)
         val stamp = System.currentTimeMillis()
         lastPackets[userId] = stamp
-        onPacket(userId, stamp)
     }
 
     override fun mixingEntrypoint() {
@@ -42,9 +41,13 @@ class AudioMixerImpl(
         val mixedFrame = ByteArray(bufferSize)
 
         streamBuffers.forEach { (id, queue) ->
-            val data = queue.poll()?.data ?: run {
-                logger.info("EMPTY")
-                silenceBuffer
+            var data = queue.poll()?.data
+
+            if (data != null) {
+                onPacket(id, true)
+            } else {
+                data = silenceBuffer
+                onPacket(id, false)
             }
 
             mixInto(mixedFrame, data)

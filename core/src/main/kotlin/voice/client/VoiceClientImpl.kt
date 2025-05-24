@@ -46,10 +46,9 @@ class VoiceClientImpl : VoiceClient {
         connectionGuide = VoiceManager.connectionGuide!!
         recipient = InetSocketAddress(host, port)
         bytesEncoder = AesBytesEncoder(secret)
-        audioMixer = AudioMixerImpl { userId, stamp ->
+        audioMixer = AudioMixerImpl { userId, speak ->
             if (::attendantsSpeakingCallback.isInitialized) {
-                val speaking = stamp > System.currentTimeMillis() - 20
-                attendantsSpeakingCallback(userId, speaking)
+                attendantsSpeakingCallback(userId, speak)
             }
         }
 
