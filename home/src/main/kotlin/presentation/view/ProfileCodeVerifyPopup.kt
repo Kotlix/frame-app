@@ -44,7 +44,7 @@ class ProfileCodeVerifyPopup {
 //                height = 300.dp
             },
             alwaysOnTop = true,
-            undecorated = true
+           // undecorated = true
         ) {
             MaterialTheme {
                 Surface(

@@ -42,10 +42,10 @@ class ProfilePopup {
     @Composable
     fun ProfilePopup(viewModel: ProfileViewModel, onClose: () -> Unit) {
         Window(
-            onCloseRequest = {},
+            onCloseRequest = onClose,
             title = "Profile Info",
             alwaysOnTop = true,
-            undecorated = true
+           // undecorated = true
         ) {
             var textFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
