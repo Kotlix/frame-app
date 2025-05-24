@@ -842,14 +842,46 @@ class HomeView {
                     }
                 }
             } else {
-                Text(
-                    "📁 ${dir.name}",
+//                Text(
+//                    "📁 ${dir.name}",
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .background(Color(0xFFDEEFFF))
+//                        .padding(4.dp)
+//                        .clickable { onSwitchDirectoryPresentation(dir.id) }
+//                )
+
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFFDEEFFF))
-                        .padding(4.dp)
-                        .clickable { onSwitchDirectoryPresentation(dir.id) }
-                )
+                        .padding(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "📁 ${dir.name}",
+                        color = Color.Black,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onSwitchDirectoryPresentation(dir.id) }
+
+                    )
+
+                    Row {
+                        IconButton(
+                            onClick = { onCreateSubdirectory(dir.id) },
+                            modifier = Modifier.size(24.dp) // уменьшаем всю кнопку
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add new directory",
+                                tint = Color(0xFF1B5E20),
+                                modifier = Modifier.size(16.dp) // уменьшаем саму иконку
+                            )
+                        }
+                    }
+                }
             }
 
             if (hiddenDirectories.containsKey(dir.id) && hiddenDirectories[dir.id] == true) {
