@@ -40,7 +40,7 @@ fun main() {
                     )
                 } else {
                     println("HOME")
-                    HomeView().HomeScreen(viewModel = homeViewModel)
+                    HomeView().HomeView(viewModel = homeViewModel)
                 }
             }
         }

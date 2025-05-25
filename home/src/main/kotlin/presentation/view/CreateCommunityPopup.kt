@@ -43,8 +43,8 @@ class CreateCommunityPopup {
         var textFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
         var error by viewModel.errorMessage
-        //var voiceServers by viewModel.voiceServers
-        var voiceServers = mapOf(Pair("Russia", listOf("Moscow", "Vladimir")), Pair("USA", listOf("NYC")))
+        var voiceServers by viewModel.voiceServers
+        //var voiceServers = mapOf(Pair("Russia", listOf("Moscow", "Vladimir")), Pair("USA", listOf("NYC")))
 
         var selectedVoiceRegion by remember { mutableStateOf("") }
         var selectedVoiceName by remember { mutableStateOf("") }

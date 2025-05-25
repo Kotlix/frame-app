@@ -30,6 +30,7 @@ dependencies {
 
     //implementation(project(":home"))
     implementation(project(":core"))
+    implementation(project(":voice"))
 }
 
 compose.desktop {

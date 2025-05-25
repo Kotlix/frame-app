@@ -18,7 +18,7 @@ dependencies {
     //implementation(platform("org.jetbrains.compose:compose-bom:2023.03.00"))
     implementation(compose.desktop.currentOs)
 
-    implementation("ru.kotlix:frame-gateway-retrofit-client:1.0.3-SNAPSHOT")
+    implementation("ru.kotlix:frame-gateway-retrofit-client:1.0.7-SNAPSHOT")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
@@ -32,8 +32,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.7.3")
     implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
 
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+
 
     implementation(project(":core"))
+    implementation(project(":voice"))
 }
 
 compose.desktop {

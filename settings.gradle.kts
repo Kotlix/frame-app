@@ -9,6 +9,8 @@ pluginManagement {
     plugins {
         kotlin("jvm") version "1.9.22"  // Используем более новую версию Kotlin
         id("org.jetbrains.compose") version "1.5.10"  // Обновляем Compose до 1.5.10 или выше
+        id("com.github.johnrengelman.shadow") version "8.1.1"
+
     }
 }
 plugins {
@@ -24,8 +26,11 @@ dependencyResolutionManagement {
     }
 }
 
+
+
 rootProject.name = "frame-app"
 include(":app")
 include(":core")
 include(":auth")
 include(":home")
+include(":voice")

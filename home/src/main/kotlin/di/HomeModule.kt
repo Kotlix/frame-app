@@ -1,37 +1,65 @@
 package di
 
 import AppConfig
+import com.google.gson.GsonBuilder
 import data.ChatApi
 import data.DirectoryApi
 import data.HomeApi
 import data.MessageApi
-import data.usecase.*
+import data.usecase.chat.CreateChatUseCase
+import data.usecase.chat.DeleteChatUseCase
+import data.usecase.chat.GetAllChatsUseCase
+import data.usecase.chat.UpdateChatUseCase
+import data.usecase.community.*
+import data.usecase.directory.CreateDirectoryUseCase
+import data.usecase.directory.DeleteDirectoryUseCase
+import data.usecase.directory.GetAllDirectoriesUseCase
+import data.usecase.directory.UpdateDirectoryUseCase
+import data.usecase.message.GetAllMessagesUseCase
+import data.usecase.message.SendMessageUseCase
+import data.usecase.profile.*
+import data.usecase.server.FetchVoiceServersUseCase
+import data.usecase.userstate.GetUserStateUseCase
+import data.usecase.voice.CreateVoiceUseCase
+import data.usecase.voice.DeleteVoiceUseCase
+import data.usecase.voice.GetAllVoicesUseCase
+import data.usecase.voice.UpdateVoiceUseCase
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.dsl.module
 import presentation.viewmodel.HomeViewModel
+import presentation.viewmodel.ProfileViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
-import ru.kotlix.frame.gateway.api.GatewayChatApi
-import ru.kotlix.frame.gateway.client.GatewayChatClient
-import ru.kotlix.frame.gateway.client.GatewayCommunityClient
-import ru.kotlix.frame.gateway.client.GatewayServerClient
-import ru.kotlix.frame.gateway.client.GatewayVoiceClient
+import ru.kotlix.frame.gateway.client.*
+import utils.LocalDateTimeAdapter
+import utils.OffsetDateTimeAdapter
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+
 
 val homeModule = module {
     // OkHttpClient
     single {
-        OkHttpClient.Builder().build()
+        val interceptor = HttpLoggingInterceptor()
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
+        OkHttpClient.Builder().addInterceptor(interceptor).build()
     }
 
     // Retrofit instance
     single {
+        val gson = GsonBuilder()
+            .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
+            .registerTypeAdapter(OffsetDateTime::class.java, OffsetDateTimeAdapter())
+            .create()
+
         Retrofit.Builder()
-            .baseUrl("http://84.54.59.98:30084")
-            //.baseUrl(AppConfig.BASE_URL)
+            //.baseUrl("http://84.54.59.98:30084")
+            .baseUrl(AppConfig.BASE_URL)
             .client(get())
             .addConverterFactory(ScalarsConverterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 
@@ -47,6 +75,38 @@ val homeModule = module {
 
     single<GatewayCommunityClient> {
         get<Retrofit>().create(GatewayCommunityClient::class.java)
+    }
+
+    single<GatewayProfileClient> {
+        get<Retrofit>().create(GatewayProfileClient::class.java)
+    }
+
+    single<GatewayChatClient> {
+        get<Retrofit>().create(GatewayChatClient::class.java)
+    }
+
+    single<GatewayMessageClient> {
+//        val interceptor = HttpLoggingInterceptor()
+//        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
+//        Retrofit.Builder()
+//            //.baseUrl("http://84.54.59.98:30084")
+//            .baseUrl(AppConfig.BASE_URL)
+//            .client(OkHttpClient.Builder().connectTimeout(1000, TimeUnit.SECONDS)
+//                .readTimeout(1000, TimeUnit.SECONDS)
+//                .writeTimeout(1000, TimeUnit.SECONDS).addInterceptor(interceptor).build()
+//            )
+//            .addConverterFactory(GsonConverterFactory.create())
+//            .build().create(GatewayMessageClient::class.java)
+
+        get<Retrofit>().create(GatewayMessageClient::class.java)
+    }
+
+    single<GatewayDirectoryClient> {
+        get<Retrofit>().create(GatewayDirectoryClient::class.java)
+    }
+
+    single<GatewayUserStateClient> {
+        get<Retrofit>().create(GatewayUserStateClient::class.java)
     }
 
     single<HomeApi> {
@@ -103,11 +163,11 @@ val homeModule = module {
     }
 
     single {
-        DeleteChatUseCase()
+        DeleteChatUseCase(get())
     }
 
     single {
-        UpdateChatUseCase()
+        UpdateChatUseCase(get())
     }
 
     single {
@@ -126,9 +186,78 @@ val homeModule = module {
         FetchVoiceServersUseCase(get())
     }
 
+    single {
+        GetMyProfileInfo(get())
+    }
+
+    single {
+        GetProfileInfoUseCase(get())
+    }
+
+    single {
+        GetAllDirectoriesUseCase(get())
+    }
+
+    single {
+        GetMembersUseCase(get())
+    }
+
+    single {
+        GetUserStateUseCase(get())
+    }
+
+    single {
+        ChangeProfileEmailUseCase(get())
+    }
+
+    single {
+        ChangeProfileEmailApplyUseCase(get())
+    }
+
+    single {
+        ChangeProfileUsernameApplyUseCase(get())
+    }
+
+    single {
+        ChangeProfileUserNameUseCase(get())
+    }
+
+    single {
+        ChangeProfilePasswordUseCase(get())
+    }
+
+    single {
+        ChangeProfilePasswordApplyUseCase(get())
+    }
+
+    single {
+        CreateVoiceUseCase(get())
+    }
+
+    single {
+        UpdateVoiceUseCase(get())
+    }
+
+    single {
+        UpdateDirectoryUseCase(get())
+    }
+
+    single {
+        DeleteDirectoryUseCase(get())
+    }
+
+    single {
+        DeleteVoiceUseCase(get())
+    }
+
     // ViewModel
     single {
         HomeViewModel(get(), get(), get(), get(), get(), get(), get(),
+            get(), get(), get(), get(), get(), get(), get(), get(), get(),
             get(), get(), get(), get(), get(), get(), get(), get())
+    }
+
+    single {
+        ProfileViewModel(get(), get(), get(), get(), get(), get(), get())
     }
 }
