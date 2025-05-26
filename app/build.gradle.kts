@@ -37,9 +37,13 @@ compose.desktop {
         mainClass = "app.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Msi)
             packageName = "app"
             packageVersion = "1.0.0"
+
+            windows {
+                iconFile.set(project.file("resources/frame.ico"))
+            }
         }
     }
 }

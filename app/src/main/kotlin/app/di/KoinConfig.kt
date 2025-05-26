@@ -1,5 +1,8 @@
-package di
+package app.di
 
+import di.authModule
+import di.homeModule
+import di.voiceModule
 import org.koin.core.context.startKoin
 
 fun initKoin() {

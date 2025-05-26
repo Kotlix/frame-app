@@ -1,4 +1,4 @@
-package di
+package app.di
 
 import AppConfig
 import org.koin.dsl.module
